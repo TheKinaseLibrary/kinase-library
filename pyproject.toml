@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kinase-library"
+dynamic = ["version", "readme", "dependencies"]
+authors = [
+    { name = "yaront", email = "tmy2110@cumc.columbia.edu" },
+    { name = "harinlee0803", email = "harin.lee@cellsignal.com" },
+    { name = "sean-landry", email = "sean.landry@cellsignal.com" },
+]
+description = "The Kinase Library Project: a Global Atlas of the Human Protein Kinome"
+requires-python = ">=3.10, <3.12"
+keywords = ["kinase", "phosphorylation", "substrate", "motif", "substrate specificity", "cell signaling", "signaling", "phosphoproteomics", "kinase enrichment", "signaling network", "kinome", "peptide library", "phosphosite"]
+license = { text = "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported" }
+
+[project.urls]
+Homepage = "https://github.com/TheKinaseLibrary/kinase-library"
+Source = "https://github.com/TheKinaseLibrary/kinase-library"
+
+[tool.setuptools.dynamic]
+readme = { file = "README.md", content-type = "text/markdown" }
+version = { attr = "kinase_library.utils._global_vars.__version__" }
+dependencies = { file = "src/requirements.txt" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["kinase_library*"]
+exclude = ["tests"]
+
+[tool.setuptools.package-data]
+"kinase_library.databases" = ["**/*.*"]
+
+[tool.pytest.ini_options]
+addopts = """
+--cov-report term-missing \
+--cov src/kinase_library -ra"""

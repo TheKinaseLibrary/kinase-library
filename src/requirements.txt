@@ -1,0 +1,15 @@
+adjustText~=0.8
+Bio~=1.5.9
+gseapy
+matplotlib~=3.7.2
+natsort~=8.4.0
+numpy~=1.25.1
+pandas~=2.0.3
+pyarrow~=12.0.1
+pytest
+pytest-cov
+scikit_learn~=1.3.0
+scipy~=1.11.1
+seaborn~=0.12.2
+statsmodels~=0.14.0
+tqdm~=4.65.0
