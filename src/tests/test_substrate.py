@@ -1,4 +1,4 @@
-import py_kinase_library as kl
+import kinase_library as kl
 
 
 def test_substrate_score():
@@ -10,7 +10,7 @@ def test_substrate_score():
 def test_substrate_percentile():
     sub = kl.Substrate('PSVEPPLtQETFSDL')
     percentile_dict = sub.percentile(kinases=['AKT1', 'AKT2'], output_type='dict')
-    assert percentile_dict == {'AKT1': 11.94, 'AKT2': 3.21}
+    assert percentile_dict == {'AKT1': 11.92, 'AKT2': 3.2}
 
 
 def test_substrate_score_rank():

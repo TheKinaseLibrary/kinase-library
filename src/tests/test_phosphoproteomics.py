@@ -1,4 +1,4 @@
-import py_kinase_library as kl
+import kinase_library as kl
 import pandas as pd
 
 
