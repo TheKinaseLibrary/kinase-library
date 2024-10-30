@@ -12,7 +12,21 @@ authors = [
 ]
 description = "The Kinase Library Project: a Global Atlas of the Human Protein Kinome"
 requires-python = ">=3.10, <3.12"
-keywords = ["kinase", "phosphorylation", "substrate", "motif", "substrate specificity", "cell signaling", "signaling", "phosphoproteomics", "kinase enrichment", "signaling network", "kinome", "peptide library", "phosphosite"]
+keywords = [
+    "kinase",
+    "phosphorylation",
+    "substrate",
+    "motif",
+    "substrate specificity",
+    "cell signaling",
+    "signaling",
+    "phosphoproteomics",
+    "kinase enrichment",
+    "signaling network",
+    "kinome",
+    "peptide library",
+    "phosphosite",
+]
 license = { text = "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported" }
 
 [project.urls]
