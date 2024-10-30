@@ -9,8 +9,9 @@ jobs:
   publish:
     name: publish
     runs-on: ubuntu-latest
+    environment: publish
     permissions:
-      contents: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v3
@@ -25,10 +26,7 @@ jobs:
       - name: Build package
         run: python -m build
       - name: Publish PyPi package
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        uses: pypa/gh-action-pypi-publish@release/v1
       - name: Publish GitHub release
         uses: ncipollo/release-action@v1
         with:
