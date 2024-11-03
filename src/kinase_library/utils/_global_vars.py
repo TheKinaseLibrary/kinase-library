@@ -1,10 +1,8 @@
 """
-################################
-# Kinase Library - Global Data #
-################################
+####################################
+# The Kinase Library - Global Data #
+####################################
 """
-
-__version__ = "0.1.0"
 
 # Matrices
 _default_mat_dir = './../databases/matrices'
@@ -14,7 +12,7 @@ def reset_mat_dir():
 reset_mat_dir()
 
 # Phosphoproteome
-_default_phosprot_name = '2020-ochoa'
+_default_phosprot_name = 'ochoa'
 def reset_phosprot_name():
     global phosprot_name
     phosprot_name = _default_phosprot_name
@@ -32,15 +30,20 @@ aa_all_ptm = ['P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q
 # Random amino acids
 ser_thr_random_aa = ['P','G','A','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E']
 tyrosine_random_aa = ['P','G','A','S','T','V','I','L','M','F','W','H','K','R','Q','N','D','E']
+random_aa_value = {'ser_thr': 1/17, 'tyr': 1/18, 'ser_thr_tyr': 1/16}
 
 # Positions
 ser_thr_pos = [-5,-4,-3,-2,-1,1,2,3,4]
 tyrosine_pos = [-5,-4,-3,-2,-1,1,2,3,4,5]
 
+# Phosphoacceptor
+kin_type_phos_acc = {'ser_thr': ['S','T','s','t'], 'tyrosine': ['Y','y']}
+
 # Valid arguments
 valid_kin_types = {'ser_thr','tyrosine'}
 valid_phos_res = {'S','s','T','t','Y','y'}
-valid_mat_types = {'densitometry','raw','norm','norm_scaled'}
+valid_mat_type = {'densitometry','raw','norm','log2'}
+valid_mat_scale = {'linear','log'}
 valid_name_types = {'kinase','gene','matrix','uniprot_id'}
 valid_aa = {'P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E','s','t','y','X','x','-','_','*'}
 valid_score_output_type = {'series','list','dict'}
@@ -49,8 +52,8 @@ valid_output_sort_by= {'input','name','value','score','percentile'}
 # Valid scoring and enrichment parameters
 valid_scoring_metric = {'score','percentile'}
 valid_enrichment_data_type = {'foreground','fg','background','bg'}
-valid_de_enrichment_type = {'upregulated','downregulated','combined'}
-valid_de_sites_type = {'upregulated','upreg','downregulated','downreg','unregulated','unreg'}
+valid_dp_enrichment_type = {'upregulated','downregulated','combined'}
+valid_dp_sites_type = {'upregulated','upreg','downregulated','downreg','unregulated','unreg'}
 valid_kl_method = {'score','percentile','score_rank','percentile_rank'}
 valid_score_type = {'scores','score_ranks','percentiles','percentile_ranks'}
 valid_enrichment_type = {'enriched','depleted','both'}
@@ -65,3 +68,4 @@ aa_colors = {'D': '#DC143C', 'E': '#DC143C', 's': '#DC143C', 't': '#DC143C', 'y'
 
 # Others
 kl_method_comp_direction_dict = {'score':'higher', 'percentile':'higher', 'score_rank':'lower', 'percentile_rank':'lower'}
+default_seq_col = 'Sequence'
