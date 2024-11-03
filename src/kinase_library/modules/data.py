@@ -1,7 +1,7 @@
 """
-################################
-# Kinase Library - Import Data #
-################################
+####################################
+# The Kinase Library - Import Data #
+####################################
 """
 
 import os
@@ -162,7 +162,7 @@ def get_densitometry(kinase, kin_type=None, rotate=False):
     return(dens_mat)
 
 
-def get_matrix(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=True, transpose=False):
+def get_matrix(kinase, kin_type=None, mat_type='log2', aa=None, pos=None, pp=True, transpose=False):
     """
     Read kinase matrix from file as pd.DataFrame.
 
@@ -173,7 +173,7 @@ def get_matrix(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=Tru
     kin_type : str
         Kinase type (ser_thr, tyrosine).
     mat_type : str, optional
-        Matrix type (raw, normalized, or normalized-scaled).
+        Matrix type (raw, normalized, or log-scaled).
     aa : list, optional
         List of amino acids to select. The default is None.
     pos : list, optional
@@ -222,7 +222,7 @@ def get_matrix(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=Tru
     return(kin_matrix)
 
 
-def get_multiple_matrices(kinases, kin_type=None, mat_type='norm',
+def get_multiple_matrices(kinases, kin_type=None, mat_type='log2',
                           aa=None, pos=None, pp=True, as_dict=False):
     """
     Making a data frame with the matrices of all the wanted kinases as rows
@@ -234,7 +234,7 @@ def get_multiple_matrices(kinases, kin_type=None, mat_type='norm',
     kin_type : str
         Kinase type (ser_thr or tyrosine).
     mat_type : str, optional
-        Matrix type (raw or normalized).
+        Matrix type (raw, normalized, or log-scaled).
     aa : list
         List of the amino acid labels to use.
     pos : list, optional
@@ -293,7 +293,7 @@ def get_multiple_matrices(kinases, kin_type=None, mat_type='norm',
     return(kin_matrices)
 
 
-def get_all_matrices(kin_type, mat_type='norm', excld_kins=[],
+def get_all_matrices(kin_type, mat_type='log2', excld_kins=[],
                      aa=None, pos=None, pp=True, non_canonical=False, as_dict=False):
     """
     Making a data frame with all the matrices of a kinase type except for excluded kinases
@@ -303,7 +303,7 @@ def get_all_matrices(kin_type, mat_type='norm', excld_kins=[],
     kin_type : str
         Kinase type (ser_thr or tyrosine).
     mat_type : str, optional
-        Matrix type (raw or normalized).
+        Matrix type (raw, normalized, or log-scaled).
     excld_kins : list, optional
         List of kinases to exclude. The default is [].
     aa : list
@@ -367,7 +367,7 @@ def get_all_matrices(kin_type, mat_type='norm', excld_kins=[],
     return(df_kin_full_mat)
 
 
-def get_matrix_from_file(file, name=None, kin_type='undefined', family='undefined', mat_type='undefined', pp=True, k_mod=False, transpose=False):
+def get_matrix_from_file(file, name=None, random_aa_value=None, kin_type='undefined', family='undefined', mat_type='customized', pp=True, k_mod=False, transpose=False):
     """
     Get kl.Kinase object from matrix file
 
@@ -402,8 +402,10 @@ def get_matrix_from_file(file, name=None, kin_type='undefined', family='undefine
         matrix = matrix.T
     if name is None:
         name = file.split('/')[-1].split('.')[0]
+    if random_aa_value is None:
+        random_aa_value = 1/len(matrix)
     
-    kin_obj = core.Kinase(name=name, matrix=matrix, kin_type=kin_type, family=family, pp=pp, k_mod=k_mod, mat_type=mat_type)
+    kin_obj = core.Kinase(name=name, matrix=matrix, random_aa_value=random_aa_value, kin_type=kin_type, family=family, pp=pp, k_mod=k_mod, mat_type=mat_type)
     
     return(kin_obj)
 
@@ -412,7 +414,7 @@ def get_st_fav(kinases,
                st_fav_file='st_favorability.tsv',
                as_dict=False, lower_case=False):
     """
-    Get serine/threonine favorability
+    Get serine/threonine favorability.
 
     Parameters
     ----------
@@ -453,6 +455,28 @@ def get_st_fav(kinases,
         return(st_fav.to_dict(orient='index'))
     
     return(st_fav)
+
+
+def get_random_aa_value(kinase):
+    """
+    Get value of random amino acid according to profiled peptide library.
+
+    Parameters
+    ----------
+    kinase : str
+        Kinase name.
+
+    Returns
+    -------
+    random_aa_value : float
+        Value of random amino acid in the used peptide library.
+
+    """
+    
+    kinase_info = get_kinase_info(kinase)
+    random_aa_value = _global_vars.random_aa_value[kinase_info['KL_LIBRARY']]
+    
+    return(random_aa_value)
 
 
 def get_current_mat_dir():
@@ -546,7 +570,7 @@ def get_kinome_info(kin_type=None, columns=None, info_file='./../databases/kinas
     return(all_kin_info)
 
 
-def get_kinase_info(kinase, kin_type=None, name_type='matrix', info_file='./../databases/kinase_data/kinome_information.tsv'):
+def get_kinase_info(kinase, name_type='matrix', info_file='./../databases/kinase_data/kinome_information.tsv'):
     """
     Get kinase information.
 
@@ -554,8 +578,6 @@ def get_kinase_info(kinase, kin_type=None, name_type='matrix', info_file='./../d
     ----------
     kinase : str
         Kinase name.
-    kin_type : str
-        Kinase type.
     name_type : str, optional
         Gene name or kinase name. The default is 'kinase'.
     info_file : str, optional
@@ -579,7 +601,7 @@ def get_kinase_info(kinase, kin_type=None, name_type='matrix', info_file='./../d
     
     
     name_column = {'kinase': 'KINASE', 'gene': 'GENE_NAME', 'matrix': 'MATRIX_NAME', 'uniprot_id': 'UNIPROT_ID'}
-    all_kin_info = get_kinome_info(kin_type=kin_type, info_file=info_file)
+    all_kin_info = get_kinome_info(info_file=info_file)
     all_kin_info = all_kin_info.set_index(name_column[name_type])
     all_kin_info.index = all_kin_info.index.str.upper()
     
@@ -589,7 +611,7 @@ def get_kinase_info(kinase, kin_type=None, name_type='matrix', info_file='./../d
 
 def get_kinase_type(kinase, name_type='matrix', info_file='./../databases/kinase_data/kinome_information.tsv'):
     """
-    Get kinase type
+    Get kinase type.
 
     Parameters
     ----------
@@ -652,12 +674,12 @@ def get_kinase_family(kinase, kin_type=None, family_col='FAMILY', name_type='mat
         kinase = [k.upper() for k in kinase]
     exceptions.check_name_type(name_type)
     
-    kin_info = get_kinase_info(kinase=kinase, kin_type=kin_type, name_type=name_type, info_file=info_file)
+    kin_info = get_kinase_info(kinase=kinase, name_type=name_type, info_file=info_file)
     
     return(kin_info[family_col])
     
 
-def get_kinase(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=True, transpose=False):
+def get_kinase(kinase, kin_type=None, mat_type='log2', aa=None, pos=None, pp=True, transpose=False):
     """
     Get kl.Kinase object by name.
 
@@ -668,7 +690,7 @@ def get_kinase(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=Tru
     kin_type : str, optional
         Kinase type (ser_thr, tyrosine). The default is None.
     mat_type : str, optional
-        Matrix type (raw, normalized, or normalized-scaled).
+        Matrix type (raw, normalized, or log-scaled).
     aa : list, optional
         List of amino acids to select. The default is None.
     pos : list, optional
@@ -696,7 +718,11 @@ def get_kinase(kinase, kin_type=None, mat_type='norm', aa=None, pos=None, pp=Tru
     exceptions.check_mat_type(mat_type)
         
     kin_matrix = get_matrix(kinase=kinase, kin_type=kin_type, mat_type=mat_type, aa=aa, pos=pos, pp=pp, transpose=transpose)
-    kin_obj = core.Kinase(name=kinase, matrix=kin_matrix, kin_type=kin_type, mat_type=mat_type, pp=pp)
+    random_aa_value = get_random_aa_value(kinase)
+    if kin_type == 'ser_thr':
+        st_fav = get_st_fav(kinase).to_dict('records')[0]
+    family = get_kinase_family(kinase)
+    kin_obj = core.Kinase(name=kinase, matrix=kin_matrix, random_aa_value=random_aa_value, kin_type=kin_type, mat_type=mat_type, pp=pp, phos_acc_fav=st_fav, family=family)
     
     return(kin_obj)
 
@@ -723,7 +749,6 @@ def get_families(kin_type):
     
     return(families)
     
-
 
 #%%
 """
@@ -806,13 +831,13 @@ def get_scored_phosphoproteome(kin_type, phosprot_name=None,
 
     if with_info:
         phosprot_info = get_phosphoproteome(kin_type=kin_type, phosprot_name=phosprot_name)
-        scored_phosprot = pd.merge(phosprot_info, scored_phosprot, left_on='SITE_+/-7_AA', right_index=True, how='left')
+        scored_phosprot = pd.merge(phosprot_info, scored_phosprot, left_on=_global_vars.default_seq_col, right_index=True, how='left')
     
     return(scored_phosprot)
 
 
 def add_scored_phosphoproteome(phosprot_data, phosprot_name,
-                               description=None, seq_col='SITE_+/-7_AA',
+                               description=None, seq_col=None,
                                replace=False, new_seq_phos_res_cols=True,
                                **pps_args):
     
@@ -820,6 +845,9 @@ def add_scored_phosphoproteome(phosprot_data, phosprot_name,
     phosprot_path = os.path.join(current_dir, _global_vars.phosprot_path)
     files_path = os.path.join(phosprot_path, phosprot_name)
     
+    if seq_col is None:
+        seq_col = _global_vars.default_seq_col
+        
     if phosprot_name in get_phosphoproteomes_list() and not replace:
         raise Exception(f'Phosphoproteome named \'{phosprot_name}\' already exists. Use replace=True to replace existing phosphoproteomes.')
     elif phosprot_name not in get_phosphoproteomes_list() and replace:
@@ -836,9 +864,7 @@ def add_scored_phosphoproteome(phosprot_data, phosprot_name,
     pps_data.data.to_csv(files_path+'/phosphoproteome.txt', sep = '\t', index=False)
     pps_data.ser_thr_data.to_csv(files_path+'/phosphoproteome_ser_thr.txt', sep = '\t', index=False)
     pps_data.tyrosine_data.to_csv(files_path+'/phosphoproteome_tyrosine.txt', sep = '\t', index=False)
-    ser_thr_scored_phosprot.to_csv(files_path+'/scored_phosprots/ser_thr_phosphoproteome_scored.tsv.zip', sep='\t', compression='gzip')
     ser_thr_scored_phosprot.to_parquet(files_path+'/scored_phosprots/ser_thr_phosphoproteome_scored.parquet')
-    tyrosine_scored_phosprot.to_csv(files_path+'/scored_phosprots/tyrosine_phosphoproteome_scored.tsv.zip', sep='\t', compression='gzip')
     tyrosine_scored_phosprot.to_parquet(files_path+'/scored_phosprots/tyrosine_phosphoproteome_scored.parquet')
     print('Complete.')
 
@@ -911,7 +937,7 @@ def update_scored_phosphoproteome(phosprot_name=None):
         phosprot_data = get_phosphoproteome(phosprot_name=ppt)
         phosprot_info = get_phosphoproteomes_info(phosprot_name=ppt)
         description = phosprot_info[_global_vars.phosprot_info_columns['description']]
-        add_scored_phosphoproteome(phosprot_data=phosprot_data, phosprot_name=ppt, description=description, seq_col='SITE_+/-7_AA', replace=True, new_seq_phos_res_cols=False)
+        add_scored_phosphoproteome(phosprot_data=phosprot_data, phosprot_name=ppt, description=description, seq_col=_global_vars.default_seq_col, replace=True, new_seq_phos_res_cols=False)
 
 
 def get_current_phosphoproteome():

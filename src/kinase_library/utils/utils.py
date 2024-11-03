@@ -1,7 +1,7 @@
 """
-##############################
-# Kinase Library - Utilities #
-##############################
+##################################
+# The Kinase Library - Utilities #
+##################################
 """
 import os
 import re
@@ -25,7 +25,7 @@ from ..modules import data
 ############
 """
 
-def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='norm', cols=None, rows=None):
+def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='log2', cols=None, rows=None):
     """
     Converting NumPy.ndarray to Pandas.DataFrame.
 
@@ -41,13 +41,13 @@ def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='norm', cols
                 * Unmodified residues and phospho-residues: 23
                 * Unmodified residues, phospho-residues and modified lysine: 25
     kin_type : str, optional
-        Kinase type. If ser_thr or tyrosine, annotation conventions will be used. 
+        Kinase type. If ser_thr or tyrosine, annotation conventions will be used.
     pp : bool, optional
         Phospho-residues in the matrix (phospho-priming). The default is True.
     k_mod : bool, optional
         Modified lysine (acetylation and tri-methylation). The default is False.
     mat_type : str, optional
-        Matrix type ('densitometry', 'raw', 'norm', 'norm_scaled', or customized). The default is 'norm'.
+        Matrix type ('densitometry', 'raw', 'norm', 'log2', or customized). The default is 'log2'.
     cols : list, optional
         Matrix columns. Must fit the shape of the matrix. The default is None.
     rows : list, optional
@@ -62,7 +62,7 @@ def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='norm', cols
     if cols is None:
         if mat_type == 'densitometry':
             cols = [str(i) for i in range(mat.shape[1])]
-        elif mat_type in _global_vars.valid_mat_types: #raw, norm, norm_scaled
+        elif mat_type in _global_vars.valid_mat_types: #raw, norm, log2
             if not pp:
                 cols = _global_vars.aa_unmod
             elif not k_mod:
@@ -232,20 +232,20 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
     else:
         ax.tick_params(axis='y', which='both', left=False, labelleft=False)
     if title is not None:
-        ax.set_title(title, fontsize = 24)
+        ax.set_title(title, fontsize=24)
     
     if xlabel != False:
-        ax.set_xlabel(xlabel,fontsize = xlabel_size)
+        ax.set_xlabel(xlabel, fontsize=xlabel_size)
     if ylabel != False:
         if ylabel is None:
             if logo_type == 'ratio_to_random':
-                ax.set_ylabel('log2(Ratio to Random)',fontsize = ylabel_size)
+                ax.set_ylabel('log2(Ratio to Random)', fontsize=ylabel_size)
             elif logo_type == 'ratio_to_median':
-                ax.set_ylabel('log2(Ratio to Median)',fontsize = ylabel_size)
+                ax.set_ylabel('log2(Ratio to Median)', fontsize=ylabel_size)
             elif logo_type == 'prob':
                 ax.set_ylabel('Probability',fontsize = ylabel_size)
         else:
-            ax.set_ylabel(ylabel,fontsize = ylabel_size)
+            ax.set_ylabel(ylabel, fontsize=ylabel_size)
     
     if save_fig:
         fig.savefig(save_fig)
@@ -300,7 +300,7 @@ def filter_invalid_subs(data, seq_col, suppress_warnings=True):
     data_no_na = data[data[seq_col].notna()]
     if not suppress_warnings and ((len(data)-len(data_no_na))>0):
         print(str(len(data)-len(data_no_na)) + ' entries were omitted due to empty value in the substrates column.')
-
+    
     escaped_aa_list = [re.escape(c) for c in _global_vars.valid_aa]
     data_no_invalid_aa = data_no_na[data_no_na[seq_col].astype(str).str.contains('^['+''.join(escaped_aa_list)+']+$')]
     if not suppress_warnings and ((len(data_no_na)-len(data_no_invalid_aa))>0):
@@ -320,7 +320,7 @@ def filter_invalid_subs(data, seq_col, suppress_warnings=True):
     return(data_no_invalid_phos_acc, omitted_enteries)
 
 
-def sequence_to_substrate(seq, pp=False, phos_pos=None, validate_phos_res=True, validate_aa=True):
+def sequence_to_substrate(seq, pp=False, phos_pos=None, kin_type=None, validate_phos_res=True, validate_aa=True):
     """
     Converting general sequence to a substrate (15-mer).
 
@@ -332,6 +332,8 @@ def sequence_to_substrate(seq, pp=False, phos_pos=None, validate_phos_res=True, 
         Phospho-priming (phospho-residues in the sequence). The default is False.
     phos_pos : int, optional
         Position of phosphoacceptor. The default is None.
+    kin_type : str, optional
+        Kinase type. If ser_thr or tyrosine, annotation conventions will be used.
     validate_phos_res : bool, optional
         validating phosphoacceptor. The default is True.
     validate_aa : bool, optional
@@ -355,9 +357,15 @@ def sequence_to_substrate(seq, pp=False, phos_pos=None, validate_phos_res=True, 
     
     if seq is np.nan:
         return(None)
-    
+
     if phos_pos is None:
         phos_pos = len(seq)//2 + 1
+    
+    if kin_type is not None:
+        exceptions.check_kin_type(kin_type)
+        phos_acc = seq[phos_pos-1]
+        if phos_acc not in _global_vars.kin_type_phos_acc[kin_type]:
+            raise Exception(f'Mismatch beteween kinase type ({kin_type}) and phosphoacceptor ({phos_acc}): {seq}')
         
     pad_seq = '_'*7 + seq + '_'*7
     substrate = pad_seq[phos_pos-1:phos_pos+14]
