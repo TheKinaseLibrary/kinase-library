@@ -24,8 +24,6 @@ from . import data
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
 
-pd.set_option('future.no_silent_downcasting', True) #UserWarning in line 453
-
 #%%
 """
 ###########################
