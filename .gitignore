@@ -49,3 +49,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Notebooks
+.ipynb_checkpoints
