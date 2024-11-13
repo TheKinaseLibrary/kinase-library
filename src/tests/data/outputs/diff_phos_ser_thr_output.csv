@@ -1,0 +1,3 @@
+,fg_counts_downreg,fg_total_downreg,bg_counts_downreg,bg_total_downreg,fg_percent_downreg,log2_freq_factor_downreg,fisher_pval_downreg,fisher_adj_pval_downreg,fg_counts_upreg,fg_total_upreg,bg_counts_upreg,bg_total_upreg,fg_percent_upreg,log2_freq_factor_upreg,fisher_pval_upreg,fisher_adj_pval_upreg,most_sig_direction,most_sig_log2_freq_factor,most_sig_fisher_pval,most_sig_fisher_adj_pval
+AKT1,5,5,0,0,100.0,0.874469117916141,1.0,1.0,1,1,0,0,100.0,0.5849625007211562,1.0,1.0,-,-0.874469117916141,1.0,1.0
+AKT2,5,5,0,0,100.0,0.874469117916141,1.0,1.0,1,1,0,0,100.0,0.5849625007211562,1.0,1.0,-,-0.874469117916141,1.0,1.0

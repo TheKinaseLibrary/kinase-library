@@ -1,3 +1,0 @@
-,fg_counts_downreg,fg_total_downreg,bg_counts_downreg,bg_total_downreg,fg_percent_downreg,log2_freq_factor_downreg,fisher_pval_downreg,adj_fisher_pval_downreg,fg_counts_upreg,fg_total_upreg,bg_counts_upreg,bg_total_upreg,fg_percent_upreg,log2_freq_factor_upreg,fisher_pval_upreg,adj_fisher_pval_upreg,most_sig_direction,most_sig_log2_freq_factor,most_sig_adj_fisher_pval
-HER2,3,3,0.0,0,100.0,0.8073549220576041,1.0,1.0,3,3,0.0,0,100.0,0.8073549220576041,1.0,1.0,-,-0.8073549220576041,1.0
-EGFR,3,3,0.0,0,100.0,0.8073549220576041,1.0,1.0,3,3,0.0,0,100.0,0.8073549220576041,1.0,1.0,-,-0.8073549220576041,1.0
