@@ -1,15 +1,17 @@
-# kinase-library
-
-[![Twitter Follow](https://img.shields.io/twitter/follow/KinaseLibrary?style=social)](https://twitter.com/KinaseLibrary) &ensp;
-[![License: CC BY-NC-SA 3.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/3.0/)
-
-<p align="center">
+<div align="center">
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="./src/notebooks/images/logo.png">
         <source media="(prefers-color-scheme: dark)" srcset="./src/notebooks/images/invert_logo.png">
-        <img src="./src/notebooks/images/logo.png" alt="Kinase Library Logo" width="30%">
+        <img src="./src/notebooks/images/logo.png" alt="Kinase Library Logo" width="50%">
     </picture>
-</p>
+
+<hr/>
+
+[![Twitter Follow](https://img.shields.io/twitter/follow/KinaseLibrary?style=social)](https://twitter.com/KinaseLibrary) &ensp;
+[![License: CC BY-NC-SA 3.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/3.0/) &ensp;
+[![PyPI Latest Release](https://img.shields.io/pypi/v/kinase-library.svg)](https://pypi.org/project/kinase-library/)
+
+</div>
 
 The Kinase Library Python package provides tools for analyzing kinase phosphorylation preferences and predicting substrate specificity. This package is based on recent research that leverages bioinformatics and synthetic peptide libraries to identify potential phosphorylation sites for both Serine/Threonine and Tyrosine kinases. It includes useful functions and analyses, such as:
 
