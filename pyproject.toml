@@ -41,7 +41,7 @@ dependencies = { file = "src/requirements.txt" }
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["kinase_library*"]
-exclude = ["tests"]
+exclude = ["tests", "notebooks"]
 
 [tool.setuptools.package-data]
 "kinase_library.databases" = ["**/*.*"]
