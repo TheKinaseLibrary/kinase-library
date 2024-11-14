@@ -2,6 +2,8 @@
 
 <p align="center">
     <picture>
+        <source media="(prefers-color-scheme: light)" srcset="./src/notebooks/images/logo.png">
+        <source media="(prefers-color-scheme: dark)" srcset="./src/notebooks/images/invert_logo.png">
         <img src="./src/notebooks/images/logo.png" alt="Kinase Library Logo" width="30%">
     </picture>
 </p>
