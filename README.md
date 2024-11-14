@@ -1,8 +1,6 @@
 <div align="center">
     <picture>
-        <source media="(prefers-color-scheme: light)" srcset="./src/notebooks/images/logo.png">
-        <source media="(prefers-color-scheme: dark)" srcset="./src/notebooks/images/invert_logo.png">
-        <img src="./src/notebooks/images/logo.png" alt="Kinase Library Logo" width="50%">
+        <img src="./src/notebooks/images/logo_qr_combined.png" alt="The Kinase Library" width="50%">
     </picture>
 
 <hr/>
