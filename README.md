@@ -1,5 +1,8 @@
 # kinase-library
 
+[![Twitter Follow](https://img.shields.io/twitter/follow/KinaseLibrary?style=social)](https://twitter.com/KinaseLibrary) &ensp;
+[![License: CC BY-NC-SA 3.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/3.0/)
+
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="./src/notebooks/images/logo.png">
@@ -24,7 +27,7 @@ pip install kinase_library
 
 ## Getting Started
 
-The Kinase Library package offers several tools for analyzing kinase phosphorylation sites. Below are some examples to help you get started. See `src/notebooks` for more comprehensive usage.
+The Kinase Library package offers several tools for analyzing kinase phosphorylation sites. Below are some examples to help you get started. See [`src/notebooks`](https://github.com/TheKinaseLibrary/kinase-library/tree/master/src/notebooks/) for more comprehensive usage.
 
 ### Example: Identify kinases capable of phosphorylating a site using `Substrate`
 
@@ -107,3 +110,9 @@ Please cite the following papers when using this package:
 ## License
 
 This package is distributed under the MIT License. See `LICENSE` for more information.
+
+## Contributors
+
+<a href="https://github.com/TheKinaseLibrary/kinase-library/graphs/contributors" alt="View Contributors">
+  <img src="https://contrib.rocks/image?repo=TheKinaseLibrary/kinase-library&max=1000&columns=10" alt="Contributors" />
+</a>
