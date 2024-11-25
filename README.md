@@ -109,7 +109,7 @@ Please cite the following papers when using this package:
 
 ## License
 
-This package is distributed under the MIT License. See `LICENSE` for more information.
+This package is distributed under the Creative Commons License. See `LICENSE` for more information.
 
 ## Contributors
 
