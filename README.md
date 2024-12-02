@@ -22,7 +22,7 @@ The Kinase Library Python package provides tools for analyzing kinase phosphoryl
 You can install the package via pip:
 
 ```
-pip install kinase_library
+pip install kinase-library
 ```
 
 ## Getting Started
