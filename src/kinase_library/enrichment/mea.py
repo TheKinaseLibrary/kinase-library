@@ -118,7 +118,6 @@ class RankedPhosData(object):
             rescore=False, weight=1,
             threads=4, min_size=1, max_size=100000,
             permutation_num=1000, seed=112123,
-            
             gseapy_verbose=False):
         """
         Kinase enrichment analysis based on pre-ranked GSEA substrates list.
@@ -135,15 +134,14 @@ class RankedPhosData(object):
             If provided, kinase enrichment will only be calculated for the specified kinase list, otherwise, all kinases of the specified kin_type will be included. The default is None.
         non_canonical : bool, optional
             Return also non-canonical kinases. For tyrosine kinases only. The default is False.
-        enrichment_type : str, optional
-            Direction of fisher's exact test for kinase enrichment ('enriched','depleted', or 'both').
         rescore : bool, optional
             If True, Kinase Library scores or percentiles will be recalculated.
+        **GSEApy parameters: weight, threads, min_size, max_size, permutation_num, seed, gseapy_verbose
     
         Returns
         -------
         enrichemnt_results : pd.DataFrame
-            pd.Dataframe with results of Kinase Enrichment for the specified KL method and threshold.
+            pd.Dataframe with results of MEA for the specified KL method and threshold.
         """
         
         exceptions.check_kl_method(kl_method)
@@ -180,7 +178,7 @@ class RankedPhosData(object):
         self.data_kl_values = getattr(self.dp_data_pps, kin_type + '_' + data_att)
         
         kin_sub_sets = self._create_kin_sub_sets(thresh=kl_thresh, comp_direction=kl_comp_direction)
-        
+
         ranked_subs = self.dp_data_pps.data.set_index(_global_vars.default_seq_col)[self.rank_col].sort_values(ascending=False)
         
         prerank_results = gp.prerank(rnk=ranked_subs,
@@ -193,10 +191,10 @@ class RankedPhosData(object):
                              seed=seed,
                              verbose=gseapy_verbose)
         
-        res_col_converter = {'Term': 'Kinase', 'ES': 'ES', 'NES': 'NES', 'NOM p-val': 'pvalue', 'FDR q-val': 'FDR', 'Tag %': 'Subs fraction', 'Lead_genes': 'Leading substrates'}
+        res_col_converter = {'Term': 'Kinase', 'ES': 'ES', 'NES': 'NES', 'NOM p-val': 'p-value', 'FDR q-val': 'FDR', 'Tag %': 'Subs fraction', 'Lead_genes': 'Leading substrates'}
 
         enrichment_data = prerank_results.res2d.drop(['Name', 'FWER p-val', 'Gene %'], axis=1).rename(columns=res_col_converter)
-        enrichment_data['pvalue'] = enrichment_data['pvalue'].replace(0,1/permutation_num).astype(float) #Setting p-value of zero to 1/(# of permutations)
+        enrichment_data['p-value'] = enrichment_data['p-value'].replace(0,1/permutation_num).astype(float) #Setting p-value of zero to 1/(# of permutations)
         enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
         sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase').reindex(data.get_kinase_list(kin_type, non_canonical=non_canonical))
         
@@ -352,7 +350,7 @@ class MeaEnrichmentResults(object):
         if adj_pval:
             pval_col = 'FDR'
         else:
-            pval_col = 'pvalue'
+            pval_col = 'p-value'
         
         if norm_es:
             es_col = 'NES'
@@ -391,7 +389,7 @@ class MeaEnrichmentResults(object):
         if adj_pval:
             pval_col = 'FDR'
         else:
-            pval_col = 'pvalue'
+            pval_col = 'p-value'
         
         if norm_es:
             es_col = 'NES'
@@ -474,7 +472,7 @@ class MeaEnrichmentResults(object):
             if adj_pval:
                 pval_col='FDR'
             else:
-                pval_col='pvalue'
+                pval_col='p-value'
         
         if ylabel is None:
             ylabel='-log$_{10}$('+pval_col+')'
