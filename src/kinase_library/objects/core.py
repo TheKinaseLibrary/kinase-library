@@ -1,7 +1,7 @@
 """
-#################################
-# Kinase Library - Core Objects #
-#################################
+#####################################
+# The Kinase Library - Core Objects #
+#####################################
 """
 
 import os
@@ -29,8 +29,8 @@ class Substrate(object):
         Sequence with phosphoacceptor.
         'X' represents random amino acid.
         '_' represents truncation of the sequence.
-    sub_type : str, optional
-        Substrate type ('ser_thr', 'tyrosine', or costume. The default is None.
+    kin_type : str, optional
+        Substrate type (if specified: 'ser_thr' or 'tyrosine'). The default is None.
     pp : bool, optional
         Phospho-priming (phospho-residues in the sequence). The default is False.
     aa : list, optional
@@ -50,7 +50,7 @@ class Substrate(object):
     >>> sub = kl.Substrate(seq, pp=True)
     >>> sub.substrate
         'PFADRRVtPXYsPKH'
-    >>> sub.sub_type
+    >>> sub.kin_type
         ser_thr'
     >>> sub.sub_bin_matrix
            -5  -4  -3  -2  -1   1   2   3   4
@@ -80,23 +80,23 @@ class Substrate(object):
 
     """
     
-    def __init__(self, seq, sub_type=None, pp=False, phos_pos=None, aa=None, pos=None, validate_phos_res=True, validate_aa=True):
+    def __init__(self, seq, kin_type=None, pp=False, phos_pos=None, aa=None, pos=None, validate_phos_res=True, validate_aa=True):
         
-        sub = utils.sequence_to_substrate(seq, pp, phos_pos, validate_phos_res, validate_aa)
+        sub = utils.sequence_to_substrate(seq=seq, pp=pp, phos_pos=phos_pos, kin_type=kin_type, validate_phos_res=validate_phos_res, validate_aa=validate_aa)
 
-        if sub_type is None:
-            sub_type = utils.substrate_type(sub)
+        if kin_type is None:
+            kin_type = utils.substrate_type(sub)
         if aa is None:
             aa = data.get_aa()
         if pos is None:
-            pos = data.get_positions(sub_type)
+            pos = data.get_positions(kin_type)
             
         self.sequence = seq
         self.length = len(seq)
         self.substrate = sub
         self.phos_res = sub[7].lower()
         self.pp = pp
-        self.sub_type = sub_type
+        self.kin_type = kin_type
         self.sub_bin_matrix = utils.sub_binary_matrix(sub, pp=pp, aa=aa, pos=pos)
         self._aa = aa
         self._pos = pos
@@ -106,7 +106,7 @@ class Substrate(object):
               st_fav=True, log2_score=True,
               non_canonical=False,
               output_type = 'series', sort_by = 'value',
-              log2_matrix=False, round_digits=4):
+              round_digits=4):
         """
         Calculate score of the substrate for the given kinases.
         
@@ -138,8 +138,6 @@ class Substrate(object):
             'input': keep the order of input kinases.
             'name': sort by kinase name.
             'value': sort by scores (high to low).
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         round_digits : int, optional
             Number of decimal digits. The default is 4.
 
@@ -152,7 +150,7 @@ class Substrate(object):
         current_dir = os.path.dirname(__file__)
         mat_dir = os.path.join(current_dir, _global_vars.mat_dir)
         
-        kin_type = self.sub_type
+        kin_type = self.kin_type
         
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
@@ -174,11 +172,7 @@ class Substrate(object):
             sub_mat = utils.sub_binary_matrix(self.substrate, pp=False, aa=self._aa, pos=self._pos)
         
         # Using table with all the matrices concatenated (log2)
-        kin_mat = data.get_multiple_matrices(kinases, kin_type=kin_type, mat_type='norm_scaled')
-        if not log2_matrix:
-            kin_mat_log2 = np.log2(kin_mat)
-        else:
-            kin_mat_log2 = kin_mat.copy()
+        kin_mat_log2 = data.get_multiple_matrices(kinases, kin_type=kin_type, mat_type='log2')
         
         sub_vector = utils.flatten_matrix(sub_mat)
 
@@ -215,7 +209,7 @@ class Substrate(object):
                    pp=None, st_fav=True, non_canonical=False,
                    output_type='series', sort_by = 'value',
                    phosprot_path='./../databases/substrates',
-                   log2_matrix=False, round_digits=2):
+                   round_digits=2):
         """
         Calculate the percentile score of the substrate for the given kinases.
         
@@ -247,8 +241,6 @@ class Substrate(object):
             'value': sort by percentile (high to low).
         phosprot_path : atr, optional
             Path to scored phosphoproteome files. The default is './../databases/substrates/scored_phosprots'.
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         round_digits : int, optional
             Number of decimal digits. The default is 2.
 
@@ -258,7 +250,7 @@ class Substrate(object):
             Percentiles of the substrate for the specified kinases.
         """
         
-        kin_type = self.sub_type
+        kin_type = self.kin_type
         
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
@@ -284,7 +276,7 @@ class Substrate(object):
             
         percent_output = []
         
-        score = self.score(kinases=kinases, pp=pp, st_fav=st_fav, log2_matrix=log2_matrix)
+        score = self.score(kinases=kinases, pp=pp, st_fav=st_fav)
         
         percent_output = round((scored_phosprot[score.index] <= score).sum() / len(scored_phosprot) * 100, round_digits)
         
@@ -308,7 +300,6 @@ class Substrate(object):
              output_type='series', sort_by='value',
              customized_scored_phosprot=None,
              phosprot_path='./../databases/substrates',
-             log2_matrix=False,
              score_round_digits=4, percentile_round_digits=2):
         """
         Returns a dataframe containing a ranking based on the Kinase Library score or percentile for all specified kinases.
@@ -316,7 +307,7 @@ class Substrate(object):
         Parameters
         ----------
         kinases : list of str
-            List of kinases for which to calculate rankings. The default is None, meaning all kinases of self.sub_type are used.
+            List of kinases for which to calculate rankings. The default is None, meaning all kinases of self.kin_type are used.
         method : str, optional
             Scoring method, must be 'score' or 'percentile'. The default is 'percentile'.
         pp : bool, optional
@@ -337,8 +328,6 @@ class Substrate(object):
             Customized phosphoproteome object. The default is None.
         phosprot_path : atr, optional
             Path to scored phosphoproteome files. The default is './../databases/substrates/scored_phosprots'.
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         score_round_digits : int, optional
             Number of decimal digits for score. The default is 4.
         percentile_round_digits : int, optional
@@ -350,7 +339,7 @@ class Substrate(object):
             Dataframe containing kinases as the index and Kinase Library score / percentile ranks as the columns.
         """
 
-        kin_type = self.sub_type
+        kin_type = self.kin_type
         
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
@@ -366,9 +355,9 @@ class Substrate(object):
         kinases = [x.upper() for x in kinases]
         
         if method == 'score':
-            score_values = self.score(pp=pp, st_fav=st_fav, non_canonical=non_canonical, log2_matrix=log2_matrix, round_digits=score_round_digits)
+            score_values = self.score(pp=pp, st_fav=st_fav, non_canonical=non_canonical, round_digits=score_round_digits)
         else:
-            score_values = self.percentile(customized_scored_phosprot=customized_scored_phosprot, pp=pp, st_fav=st_fav, non_canonical=non_canonical, phosprot_path=phosprot_path, log2_matrix=log2_matrix, round_digits=percentile_round_digits)
+            score_values = self.percentile(customized_scored_phosprot=customized_scored_phosprot, pp=pp, st_fav=st_fav, non_canonical=non_canonical, phosprot_path=phosprot_path, round_digits=percentile_round_digits)
 
         rank_output = score_values.rank(method='min', ascending=False).astype(int).loc[kinases]
         
@@ -392,7 +381,7 @@ class Substrate(object):
                 pp=None, st_fav=True, non_canonical=False,
                 customized_scored_phosprot=None,
                 phosprot_path='./../databases/substrates',
-                log2_matrix=False, log2_score=True,
+                log2_score=True,
                 sort_by='percentile',
                 score_round_digits=4, percentile_round_digits=2):
         """
@@ -401,7 +390,7 @@ class Substrate(object):
         Parameters
         ----------
         kinases : list of str, optional
-            List of kinases for which to make predictions. The default is None, meaning all kinases of self.sub_type are used.
+            List of kinases for which to make predictions. The default is None, meaning all kinases of self.kin_type are used.
         pp : bool, optional
             Phosphopriming boolean to be sent into score and percentile. The default is None.
             If not specified, will be inferred from the substrate.
@@ -413,8 +402,6 @@ class Substrate(object):
             Customized phosphoproteome object. The default is None.
         phosprot_path : atr, optional
             Path to scored phosphoproteome files. The default is './../databases/substrates/scored_phosprots'.
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         log2_score : bool, optional
             Return scores as log2. The default is True.
         sort_by : str, optional
@@ -434,7 +421,7 @@ class Substrate(object):
             Dataframe containing kinases as the index and scoring metrics as the columns.
         """
         
-        kin_type = self.sub_type
+        kin_type = self.kin_type
         
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
@@ -446,10 +433,10 @@ class Substrate(object):
         
         kinases = [x.upper() for x in kinases]
 
-        score = self.score(kinases=kinases, log2_score=log2_score, pp=pp, st_fav=st_fav, non_canonical=non_canonical, log2_matrix=log2_matrix, round_digits=score_round_digits)
+        score = self.score(kinases=kinases, log2_score=log2_score, pp=pp, st_fav=st_fav, non_canonical=non_canonical, round_digits=score_round_digits)
         score_rank = self.rank(kinases=kinases, method='score', pp=pp, st_fav=st_fav, non_canonical=non_canonical, score_round_digits=score_round_digits)
-        percentile = self.percentile(kinases, customized_scored_phosprot=customized_scored_phosprot, pp=pp, st_fav=st_fav, non_canonical=non_canonical, log2_matrix=log2_matrix, round_digits=percentile_round_digits)
-        percentile_rank = self.rank(kinases=kinases, method='percentile', pp=pp, st_fav=st_fav, non_canonical=non_canonical, customized_scored_phosprot=customized_scored_phosprot, phosprot_path=phosprot_path, log2_matrix=log2_matrix, percentile_round_digits=percentile_round_digits)
+        percentile = self.percentile(kinases, customized_scored_phosprot=customized_scored_phosprot, pp=pp, st_fav=st_fav, non_canonical=non_canonical, round_digits=percentile_round_digits)
+        percentile_rank = self.rank(kinases=kinases, method='percentile', pp=pp, st_fav=st_fav, non_canonical=non_canonical, customized_scored_phosprot=customized_scored_phosprot, phosprot_path=phosprot_path, percentile_round_digits=percentile_round_digits)
 
         prediction_output = pd.concat([score.rename('Score'),
                                        score_rank.rename('Score Rank'),
@@ -494,6 +481,10 @@ class Kinase(object):
         Kinase name.
     matrix : np.ndarray or pd.DataFrame
         Kinase matrix.
+    random_aa_value : float
+        Value of random amino acid in the matrix.
+    mat_type : str, optional
+        Matrix type ('densitometry', 'raw', 'norm', 'log2', or customized). The default is 'log2'.
     kin_type : str
         Kinase type.
     family : str, optional
@@ -502,8 +493,6 @@ class Kinase(object):
         Phospho-residues in the matrix (phospho-priming). The default is True.
     k_mod : bool, optional
         Modified lysine (acetylation and tri-methylation). The default is False.
-    mat_type : str, optional
-        Matrix type ('densitometry', 'raw', 'norm', 'norm_scaled', or customized). The default is 'norm'.
     phos_acc_fav : dict, optional
         Central phosphoacceptor favorability. The default is None.
     cols : list, optional
@@ -584,9 +573,9 @@ class Kinase(object):
         Name: SRPK1, dtype: object
         """
     
-    def __init__(self, name, matrix=None, kin_type=None, family=None,
-                 pp=True, k_mod=False, mat_type='norm', phos_acc_fav=None,
-                 cols=None, rows=None):
+    def __init__(self, name, matrix, random_aa_value, mat_type='log2',
+                 kin_type=None, family=None, pp=True, k_mod=False,
+                 phos_acc_fav=None, cols=None, rows=None):
         
         input_type = type(matrix)
         if input_type == np.ndarray:
@@ -604,8 +593,23 @@ class Kinase(object):
         except:
             info = 'N/A'
         
+        if mat_type == 'log2':
+            lin_mat = np.power(2,df_mat)*random_aa_value
+            log2_mat = df_mat.copy()
+        elif mat_type in ['densitometry','raw','norm']:
+            lin_mat = df_mat.copy()
+            log2_mat = np.log2(df_mat/random_aa_value)
+        elif mat_type == 'customized':
+            lin_mat = df_mat.copy()
+            log2_mat = df_mat.copy()
+        else:
+            raise ValueError('\'mat_type\' must be one of the followings: \'densitometry\', \'raw\', \'norm\', \'log2\', or \'customized\'.')
+        
         self.name = name
         self.matrix = df_mat
+        self.random_aa_value = random_aa_value
+        self.norm_matrix = lin_mat
+        self.log2_matrix = log2_mat
         self.mat_type = mat_type
         self.kin_type = kin_type
         self.family = family
@@ -617,11 +621,10 @@ class Kinase(object):
         self.info = info
         
         if kin_type == 'ser_thr':
-            st_fav = data.get_st_fav(name).round(2).to_dict(orient='index')[name]
-            self.st_fav = st_fav
+            self.st_fav = self.phos_acc_fav
         
     
-    def _get_matrix(self, kinase, kin_type=None, mat_type='norm', aa=None, pos=None, transpose=False):
+    def _get_matrix(self, kinase, kin_type=None, mat_type='log2', aa=None, pos=None, transpose=False):
         """
         Read kinase matrix from file as pd.DataFrame.
     
@@ -776,19 +779,15 @@ class Kinase(object):
         return(self.matrix.loc[aa,pos])
     
     
-    def heatmap(self, random_aa_value=None, zero_pos=True, vertical=True, square=True, title=None,
-                xticks_fontsize=None, yticks_fontsize=None, cmap=None,
+    def heatmap(self, zero_pos=True, square=True, title=None,
+                xticks_fontsize=None, yticks_fontsize=None, cmap=None, mat_scale='log',
                 drop_aa=[], drop_pos=[], replace_aa_labels={'s' :'pS', 't' :'pT', 'y':'pY'},
-                plot=True, return_fig=False, ax=None, cbar=True, cbar_ax=None):
+                plot=True, return_fig=False, ax=None, cbar=True, cbar_ax=None, label=True):
         """
         Make heatmap of the matrix.
 
         Parameters
         ----------
-        random_aa_value : float, optional
-            Value of random amino acid (white color). The default is None.
-        vertical : bool, optional
-            Vertical matrix (positions as columns and amino acids as rows). The default is True.
         title : str, optional
             Title of heatmap. The default is None.
         xticks_fontsize : float, optional
@@ -797,6 +796,8 @@ class Kinase(object):
             y-ticks labels size. The Default is 8.
         cmap : plt.colormap, optional
             Colormap for the heatmap. The default is None (will be ['darkblue','blue','white','IndianRed','red']).
+        mat_scale : string, optional
+            Scale of matrix - linear-scale ('linear') or log-scale ('log').
         drop_aa : list, optional
             Amino acids to drop. The default is [].
         drop_pos : list, optional
@@ -814,9 +815,9 @@ class Kinase(object):
             if 'return_fig' is True, returning plt.Figure of the heatmap.
         """
         
-        if random_aa_value is None:
-            random_aa = ['P','G','A'] + ['S','T']*(self.kin_type == 'tyrosine') + ['V','I','L','M','F'] + ['Y']*((self.kin_type == 'ser_thr') and (self.name.upper() not in ['PDHK1', 'PDHK4'])) + ['W','H','K','R','Q','N','D','E']
-            random_aa_value = 1/len(random_aa)
+        exceptions.check_mat_scale(mat_scale)
+        
+        random_aa_value = self.random_aa_value
         
         if title is None:
             title = self.name
@@ -830,32 +831,43 @@ class Kinase(object):
             if return_fig:
                 raise ValueError('When Axes provided, \'return_fig\' must be False.')
         
-        if not vertical:
-            matrix = self.matrix.transpose()
+        if label is True:
+            label = f'Favorability ({mat_scale}-scale)'
         else:
-            matrix= self.matrix.copy()
-        
-        matrix = matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore').rename(index = replace_aa_labels)
+            label = None
         
         if cmap is None:
             cmap = mcol.LinearSegmentedColormap.from_list("Kinase",['darkblue','blue','white','IndianRed','red'])
-        cnorm = mcol.TwoSlopeNorm(vmin=0, vcenter=random_aa_value)
+            
+        if mat_scale == 'log':
+            plot_matrix = self.log2_matrix
+            vmin = None
+            vcenter = 0
+        elif mat_scale == 'linear':
+            plot_matrix = self.norm_matrix
+            vmin = 0
+            vcenter = random_aa_value
+        cnorm = mcol.TwoSlopeNorm(vmin=vmin, vcenter=vcenter)
+        
+        plot_matrix = plot_matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore').rename(index = replace_aa_labels)
         
         if zero_pos:
-            matrix.insert(int((matrix.columns < 0).sum()), 0, random_aa_value)
-        sns.heatmap(matrix, cmap=cmap, norm=cnorm, vmin=0, xticklabels=True, yticklabels=True, square=square, linewidths=0.25+0.25*(square==False), linecolor='gray', ax=ax, cbar=cbar, cbar_ax=cbar_ax)
+            plot_matrix.insert(int((plot_matrix.columns < 0).sum()), 0, random_aa_value)
+        sns.heatmap(plot_matrix, cmap=cmap, norm=cnorm, vmin=vmin, xticklabels=True, yticklabels=True, square=square, linewidths=0.25+0.25*(square==False), linecolor='gray', ax=ax, cbar=cbar, cbar_ax=cbar_ax)
+        ax.collections[-1].colorbar.ax.set_yscale('linear')
+        ax.set_ylabel(label, fontsize=8)
         if zero_pos:
             ax.add_patch(
                 patches.Rectangle(
-                    xy=(int((matrix.columns < 0).sum()), 0),
-                    width=1.0, height=len(matrix),
+                    xy=(int((plot_matrix.columns < 0).sum()), 0),
+                    width=1.0, height=len(plot_matrix),
                     edgecolor='gray',
                     fill=True, facecolor='white',
                     lw=0.25+0.25*(square==False)))
         else:
-            ax.axvline(int((matrix.columns < 0).sum()), color='black', lw=2+1*(square==False))
+            ax.axvline(int((plot_matrix.columns < 0).sum()), color='black', lw=2+1*(square==False))
         
-        ax.add_patch(patches.Rectangle((0, 0), matrix.shape[1], matrix.shape[0], fill=False, edgecolor='black', lw=1))
+        ax.add_patch(patches.Rectangle((0, 0), plot_matrix.shape[1], plot_matrix.shape[0], fill=False, edgecolor='black', lw=1))
         
         if xticks_fontsize is None:
             if square:
@@ -868,7 +880,7 @@ class Kinase(object):
             else:
                 yticks_fontsize = 12
         
-        ax.set_xticklabels(labels=[str(x) if x<=0 else '+'+str(x) for x in sorted(matrix.columns)], fontsize=xticks_fontsize)
+        ax.set_xticklabels(labels=[str(x) if x<=0 else '+'+str(x) for x in sorted(plot_matrix.columns)], fontsize=xticks_fontsize)
         ax.set_yticklabels(labels=ax.get_yticklabels(), fontsize=yticks_fontsize)
         ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=True, labelleft=True, rotation=0)
         ax.set_title(title, fontsize=14)
@@ -888,7 +900,7 @@ class Kinase(object):
             return(fig)
     
     
-    def seq_logo(self, logo_type='ratio_to_median', zero_pos=None, zero_pos_format='upper', random_aa_value=None,
+    def seq_logo(self, logo_type='ratio_to_median', zero_pos=None, zero_pos_format='upper',
                  drop_aa=['s'], drop_pos=[], replace_aa_labels={'t' :'pS/pT', 'y':'pY'},
                  title=None, xlabel='Position', ylabel=None,
                  save_fig=False, return_fig=False, plot=True, ax=None,
@@ -908,8 +920,6 @@ class Kinase(object):
             Intensities will be normalized to sum up to 1.
         zero_pos_format : str, optional
             Letter-case format of zero position letters (lower or upper). The default is 'lower'.
-        random_aa_value : TYPE, optional
-            Value of random amino acid to normalize for. The default is 0.05. The default is None.
         drop_aa : list, optional
             Amino acids to drop. The default is ['s'].
         drop_pos : list, optional
@@ -939,7 +949,7 @@ class Kinase(object):
             If specified, returning the figure object with the sequence logo.
         """
         
-        plot_matrix = self.matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore')
+        plot_matrix = self.norm_matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore')
         plot_matrix = plot_matrix.rename(index = replace_aa_labels)
         
         if zero_pos is None:
@@ -957,13 +967,8 @@ class Kinase(object):
             else:
                 raise Exception('\'zero_pos_format\' must be either \'lower\' or \'upper\'.')
         
-        if random_aa_value is None:
-            if self.kin_type is None:
-                raise Exception('Either \'kin_type\' or \'random_aa_value\' must be specified.')
-            random_aa = ['P','G','A'] + ['S','T']*(self.kin_type == 'tyrosine') + ['V','I','L','M','F'] + ['Y']*((self.kin_type == 'ser_thr') and (self.name.upper() not in ['PDHK1', 'PDHK4'])) + ['W','H','K','R','Q','N','D','E']
-            random_aa_value = 1/len(random_aa)
-        
-        return utils.make_seq_logo(plot_matrix, logo_type=logo_type, zero_pos=zero_pos, random_aa_value=random_aa_value,
+        return utils.make_seq_logo(plot_matrix, logo_type=logo_type, zero_pos=zero_pos,
+                                   random_aa_value=self.random_aa_value,
                                    title=title, xlabel=xlabel, ylabel=ylabel,
                                    save_fig=save_fig, return_fig=return_fig, plot=plot, ax=ax,
                                    **seq_logo_kwargs)
@@ -971,7 +976,7 @@ class Kinase(object):
     
     def plot_data(self, seq_logo=True, heatmap=True, st_fav=True, title=None,
                   fig_aspect=1.5, plot=True, save_fig=False, return_fig=False,
-                  seq_logo_kwargs={}, heatmap_kwargs={}):
+                  mat_scale='log', seq_logo_kwargs={}, heatmap_kwargs={}):
         """
         Generates a kinase ID figure including a sequence logo, heatmap, and s/t favorability plot.
 
@@ -993,6 +998,8 @@ class Kinase(object):
             Path to file for saving the figure. The default is False.
         return_fig : bool, optional
             If true, the figure will be returned as a plt.figure object. The default is False.
+        mat_scale : string, optional
+            Scale of matrix - linear-scale ('linear') or log-scale ('log').
         seq_logo_kwargs : dict/args
             Optional keyword arguments passed into the seq_logo function.
         heatmap_kwargs : dict/args
@@ -1014,16 +1021,16 @@ class Kinase(object):
         else:
             ax[0,0].axis('off')
         if heatmap:
-            self.heatmap(ax=ax[1,0], cbar_ax=ax[1,1], square=False, zero_pos=True, title=False, xticks_fontsize=12, yticks_fontsize=9, **heatmap_kwargs)
+            self.heatmap(ax=ax[1,0], cbar_ax=ax[1,1], square=False, zero_pos=True, title=False, xticks_fontsize=12, yticks_fontsize=9, mat_scale=mat_scale, **heatmap_kwargs)
         else:
             ax[1,0].axis('off')
             ax[1,1].axis('off')
         if self.kin_type == 'ser_thr' and st_fav:
             self._plot_st_fav(ax=ax[2,0], title=None, value_annot=False, x_text=0.5, y_text=1.1, va_text='bottom')
             if  heatmap:
-                con1 = patches.ConnectionPatch(xyA=((self.matrix.columns<0).sum(),len(self.matrix)), xyB=(0,1),
+                con1 = patches.ConnectionPatch(xyA=((self.norm_matrix.columns<0).sum(),len(self.norm_matrix)), xyB=(0,1),
                                                coordsA='data', coordsB='data', axesA=ax[1,0], axesB=ax[2,0], color='black')
-                con2 = patches.ConnectionPatch(xyA=((self.matrix.columns<0).sum()+1,len(self.matrix)), xyB=(1,1),
+                con2 = patches.ConnectionPatch(xyA=((self.norm_matrix.columns<0).sum()+1,len(self.norm_matrix)), xyB=(1,1),
                                                coordsA='data', coordsB='data', axesA=ax[1,0], axesB=ax[2,0], color='black')
                 ax[1,0].add_artist(con1)
                 ax[1,0].add_artist(con2)
@@ -1053,7 +1060,7 @@ class Kinase(object):
     
     def score(self, subs, pp=False, phos_pos=None, phos_acc_fav=None,
               log2_score=True, output_type = 'series',
-              log2_matrix=False, round_digits=2,
+              round_digits=2,
               validate_phos_res=True, validate_aa=True,
               **sub_args):
         """
@@ -1082,8 +1089,6 @@ class Kinase(object):
             'series': pd.Series, kinases as index.
             'list': list of values (same order as input kinase list).
             'dict': dictionary (kinase -> value).
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         round_digits : int, optional
             Number of decimal digits. The default is 2.
         validate_phos_res : bool, optional
@@ -1103,13 +1108,10 @@ class Kinase(object):
         
         if isinstance(subs, str):
             subs = [subs]
-        subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa) for s in subs])
+        subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa, kin_type=self.kin_type) for s in subs])
         subs_bin_mat = utils.sub_binary_matrix(subs_list, aa=self.amino_acids, pos=self.positions)
 
-        if not log2_matrix:
-            kin_mat_log2 = np.log2(self.matrix)
-        else:
-            kin_mat_log2 = self.matrix
+        kin_mat_log2 = self.log2_matrix
         
         kin_vector = utils.flatten_matrix(kin_mat_log2)
         
@@ -1137,8 +1139,7 @@ class Kinase(object):
     
     def percentile(self, subs, pp=False, phos_pos=None, phos_acc_fav=None,
                    output_type='series', customized_scored_phosprot=None,
-                   log2_matrix=False, round_digits=2,
-                   validate_phos_res=True, validate_aa=True,
+                   round_digits=2, validate_phos_res=True, validate_aa=True,
                    **sub_args):
         """
         Calculate the percentile score of the given substrate for the kinase.
@@ -1169,8 +1170,6 @@ class Kinase(object):
             'dict': dictionary (kinase -> value).
         customized_scored_phosprot : kl.ScoredPhosphoProteome, optional
             Customized phosphoproteome object. The default is None.
-        log2_matrix : bool, optional
-            Whether kinase matrices are already log2 transformed. The default is False.
         round_digits : int, optional
             Number of decimal digits. The default is 2.
         validate_phos_res : bool, optional
@@ -1192,14 +1191,13 @@ class Kinase(object):
         
         if isinstance(subs, str):
             subs = [subs]
-        subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa) for s in subs])
+        subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa, kin_type=self.kin_type) for s in subs])
         
-        score = self.score(subs=subs_list, pp=pp, phos_pos=phos_pos, phos_acc_fav=phos_acc_fav, log2_score=True, log2_matrix=log2_matrix, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa, **sub_args)
+        score = self.score(subs=subs_list, pp=pp, phos_pos=phos_pos, phos_acc_fav=phos_acc_fav, log2_score=True, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa, **sub_args)
         
         phosprot = data.get_phosphoproteome(kin_type=self.kin_type)
-        phosprot_subs = phosprot['SITE_+/-7_AA'].to_list()
-        print('Calculating phosphoproteome scores for '+str(len(phosprot_subs))+' '+self.kin_type+' substrates')
-        scored_phosprot = self.score(subs=phosprot_subs, pp=pp, log2_score=True, log2_matrix=log2_matrix, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa)
+        phosprot_subs = phosprot[_global_vars.default_seq_col].to_list()
+        scored_phosprot = self.score(subs=phosprot_subs, pp=pp, log2_score=True, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa)
         
         percent_values = scored_phosprot.sort_values().searchsorted(score, side='right')/len(scored_phosprot)*100
         percent_values = np.round(percent_values, round_digits)
@@ -1288,7 +1286,7 @@ class ScoredPhosphoProteome(object):
         
         self.log2_values = log2_values
     
-    def merge_data_scores(self, kin_type, data_seq_col='SITE_+/-7_AA'):
+    def merge_data_scores(self, kin_type, data_seq_col=None):
         """
         Merging phosphoproteome data and scores
 
@@ -1297,13 +1295,16 @@ class ScoredPhosphoProteome(object):
         kin_type : str
             Kinase type (ser_thr or tyrosine).
         data_seq_col : str, optional
-            Sequence column name in data file. The default is 'SITE_+/-7_AA'.
+            Sequence column name in data file. The default is None (will be set as _global_vars.default_seq_col).
 
         Returns
         -------
         merged_data : dataframe
             Merged dataframe of the phosphoproteome data and scores.
         """
+        
+        if data_seq_col is None:
+            data_seq_col = _global_vars.default_seq_col
         
         data = getattr(self, kin_type+'_data').set_index(data_seq_col, drop=False)
         scores = getattr(self, kin_type+'_scores')
@@ -1336,7 +1337,7 @@ class Kinome(object):
     k_mod : bool, optional
         Modified lysine (acetylation and tri-methylation). The default is False.
     mat_type : str, optional
-        Matrix type ('densitometry', 'raw', 'norm', 'norm_scaled', or customized). The default is 'norm'.
+        Matrix type ('densitometry', 'raw', 'norm', 'log2', or customized). The default is 'log2'.
     cols : list, optional
         Matrix columns. Must fit the shape of the matrix. The default is None.
     rows : list, optional

@@ -1,3 +1,3 @@
-,fg_counts,fg_total,bg_counts,bg_total,fg_percent,log2_freq_factor,fisher_pval,adj_fisher_pval
+,fg_counts,fg_total,bg_counts,bg_total,fg_percent,log2_freq_factor,fisher_pval,fisher_adj_pval
 HER2,9,9,9,9,100.0,0.0,1.0,1.0
 EGFR,9,9,9,9,100.0,0.0,1.0,1.0

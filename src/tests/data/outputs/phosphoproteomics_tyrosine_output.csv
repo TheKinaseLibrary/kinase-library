@@ -1,2 +1,2 @@
-SITE_+/-7_AA,HER2_score,HER2_score_rank,HER2_percentile,HER2_percentile_rank,EGFR_score,EGFR_score_rank,EGFR_percentile,EGFR_percentile_rank
-LHSDKKLyLVFEFCD,0.5674,41,80.98,32,-0.2597,64,55.5,62
+Sequence,Score Promiscuity Index,Percentile Promiscuity Index,HER2_score,HER2_score_rank,HER2_percentile,HER2_percentile_rank,EGFR_score,EGFR_score_rank,EGFR_percentile,EGFR_percentile_rank
+LHSDKKLyLVFEFCD,26,13,0.567,41,80.98,32,-0.26,64,55.5,62

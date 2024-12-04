@@ -1,7 +1,7 @@
 """
-######################################
-# Kinase Library - Kinase Enrichment #
-######################################
+##########################################
+# The Kinase Library - Kinase Enrichment #
+##########################################
 """
 
 import pandas as pd
@@ -20,6 +20,8 @@ from tqdm import tqdm
 from ..utils import _global_vars, exceptions
 from . import data
 
+pd.set_option('future.no_silent_downcasting', True)
+
 # mpl.use("Qt5Agg")
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
@@ -27,11 +29,11 @@ plt.rcParams['pdf.fonttype'] = 42
 #%%
 """
 ###########################
-# Differential Expression #
+# Differential Phosphorylation #
 ###########################
 """
 
-def de_regulated_sites(de_data, lfc_col, lfc_thresh=0,
+def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
                        pval_col=None, pval_thresh=0.05,
                        percent_rank=None, percent_thresh=20,
                        drop_na=True, suppress_warnings=False):
@@ -40,8 +42,8 @@ def de_regulated_sites(de_data, lfc_col, lfc_thresh=0,
 
     Parameters
     ----------
-    de_data : pd.DataFrame
-        Differential Expression data. Must have lfc column.
+    dp_data : pd.DataFrame
+        Differential Phosphorylation data. Must have lfc column.
     lfc_col : str
         lfc column name.
     fc_thresh : float
@@ -57,12 +59,12 @@ def de_regulated_sites(de_data, lfc_col, lfc_thresh=0,
 
     Returns
     -------
-    de_data : pd.DataFrame
-        Valid Differential Expression data after dropping missing values. Must have lfc column.
+    dp_data : pd.DataFrame
+        Valid Differential Phosphorylation data after dropping missing values. Must have lfc column.
     reg_sites_dict : dictionary
         Dictionary with the 3 types of regulated sites: upregulated, downregulated, and unregulated.
     dropped_enteries : pd.DataFrame
-        Dropped enteries due to missing differential expression data.
+        Dropped enteries due to missing differential phosphorylation data.
     """
 
     if lfc_thresh < 0:
@@ -72,56 +74,56 @@ def de_regulated_sites(de_data, lfc_col, lfc_thresh=0,
     if not 0<=percent_thresh<=100:
         raise ValueError('Percent threshold must be between 0-100.')
         
-    all_de_data = de_data.copy()
+    all_dp_data = dp_data.copy()
     if drop_na:
-        de_data = all_de_data[~all_de_data[lfc_col].isna()]
+        dp_data = all_dp_data[~all_dp_data[lfc_col].isna()]
         if pval_col is not None:
-            de_data = de_data[~de_data[pval_col].isna()]
-        if (len(all_de_data)-len(de_data) > 0) and not suppress_warnings:
+            dp_data = dp_data[~dp_data[pval_col].isna()]
+        if (len(all_dp_data)-len(dp_data) > 0) and not suppress_warnings:
             if pval_col is not None:
-                print(str(len(all_de_data)-len(de_data)) + ' entries were dropped due to empty value in the logFC or p-value columns.')
+                print(str(len(all_dp_data)-len(dp_data)) + ' entries were dropped due to empty value in the logFC or p-value columns.')
             else:
-                print(str(len(all_de_data)-len(de_data)) + ' entries were dropped due to empty value in the logFC column.')
+                print(str(len(all_dp_data)-len(dp_data)) + ' entries were dropped due to empty value in the logFC column.')
     
-    dropped_enteries = pd.concat([all_de_data, de_data])
+    dropped_enteries = pd.concat([all_dp_data, dp_data])
     dropped_enteries = dropped_enteries.loc[dropped_enteries.astype(str).drop_duplicates(keep=False).index] #In order to deal with lists in the DataFrame
     
     if len(dropped_enteries)>0 and not suppress_warnings:
-        print('Use the \'de_dropped_enteries\' attribute to view dropped enteries due to invalid differential expression values.')
+        print('Use the \'dp_dropped_enteries\' attribute to view dropped enteries due to invalid differential phosphorylation values.')
     
     if percent_rank is not None:
         if percent_rank == 'logFC':
-            sorted_de_data = de_data.sort_values(lfc_col, ascending=False)
+            sorted_dp_data = dp_data.sort_values(lfc_col, ascending=False)
         elif percent_rank == 'pvalue':
-            sort_values = -np.sign(de_data[lfc_col])*np.log10(de_data[pval_col])
+            sort_values = -np.sign(dp_data[lfc_col])*np.log10(dp_data[pval_col])
             sorted_indices = sort_values.argsort()[::-1]
-            sorted_de_data = de_data.iloc[sorted_indices]
+            sorted_dp_data = dp_data.iloc[sorted_indices]
         else:
             raise ValueError('percent_rank must be either \'logFC\' or \'pvalue\'.')
-        reg_sites_dict = dict(zip(['upreg','unreg','downreg'], np.split(sorted_de_data, [int(percent_thresh/100*len(de_data)), int((1-percent_thresh/100)*len(de_data))])))
+        reg_sites_dict = dict(zip(['upreg','unreg','downreg'], np.split(sorted_dp_data, [int(percent_thresh/100*len(dp_data)), int((1-percent_thresh/100)*len(dp_data))])))
     
     else:
         reg_sites_dict = {}
         if lfc_thresh == 0: # In case of lfc_thresh of zero, treat lfc of 0 as unregulated
             if pval_col is not None:
-                reg_sites_dict['upreg'] = de_data[(de_data[lfc_col]>lfc_thresh) & (de_data[pval_col]<=pval_thresh)]
-                reg_sites_dict['downreg'] = de_data[(de_data[lfc_col]<-lfc_thresh) & (de_data[pval_col]<=pval_thresh)]
-                reg_sites_dict['unreg'] = de_data[(de_data[lfc_col].abs()==lfc_thresh) | (de_data[pval_col]>pval_thresh)]
+                reg_sites_dict['upreg'] = dp_data[(dp_data[lfc_col]>lfc_thresh) & (dp_data[pval_col]<=pval_thresh)]
+                reg_sites_dict['downreg'] = dp_data[(dp_data[lfc_col]<-lfc_thresh) & (dp_data[pval_col]<=pval_thresh)]
+                reg_sites_dict['unreg'] = dp_data[(dp_data[lfc_col].abs()==lfc_thresh) | (dp_data[pval_col]>pval_thresh)]
             else:
-                reg_sites_dict['upreg'] = de_data[de_data[lfc_col]>lfc_thresh]
-                reg_sites_dict['downreg'] = de_data[de_data[lfc_col]<-lfc_thresh]
-                reg_sites_dict['unreg'] = de_data[de_data[lfc_col].abs()==lfc_thresh]
+                reg_sites_dict['upreg'] = dp_data[dp_data[lfc_col]>lfc_thresh]
+                reg_sites_dict['downreg'] = dp_data[dp_data[lfc_col]<-lfc_thresh]
+                reg_sites_dict['unreg'] = dp_data[dp_data[lfc_col].abs()==lfc_thresh]
         else:
             if pval_col is not None:
-                reg_sites_dict['upreg'] = de_data[(de_data[lfc_col]>=lfc_thresh) & (de_data[pval_col]<=pval_thresh)]
-                reg_sites_dict['downreg'] = de_data[(de_data[lfc_col]<=-lfc_thresh) & (de_data[pval_col]<=pval_thresh)]
-                reg_sites_dict['unreg'] = de_data[(de_data[lfc_col].abs()<lfc_thresh) | (de_data[pval_col]>pval_thresh)]
+                reg_sites_dict['upreg'] = dp_data[(dp_data[lfc_col]>=lfc_thresh) & (dp_data[pval_col]<=pval_thresh)]
+                reg_sites_dict['downreg'] = dp_data[(dp_data[lfc_col]<=-lfc_thresh) & (dp_data[pval_col]<=pval_thresh)]
+                reg_sites_dict['unreg'] = dp_data[(dp_data[lfc_col].abs()<lfc_thresh) | (dp_data[pval_col]>pval_thresh)]
             else:
-                reg_sites_dict['upreg'] = de_data[de_data[lfc_col]>=lfc_thresh]
-                reg_sites_dict['downreg'] = de_data[de_data[lfc_col]<=-lfc_thresh]
-                reg_sites_dict['unreg'] = de_data[de_data[lfc_col].abs()<lfc_thresh]
+                reg_sites_dict['upreg'] = dp_data[dp_data[lfc_col]>=lfc_thresh]
+                reg_sites_dict['downreg'] = dp_data[dp_data[lfc_col]<=-lfc_thresh]
+                reg_sites_dict['unreg'] = dp_data[dp_data[lfc_col].abs()<lfc_thresh]
     
-    return(de_data, reg_sites_dict, dropped_enteries)
+    return(dp_data, reg_sites_dict, dropped_enteries)
 
 #%%
 """
@@ -145,7 +147,7 @@ def combine_binary_enrichment_results(enrichment_results_dict, data_type='kl_obj
         If None, will be set to 'log2_freq_factor'.
     pval_col_name : str, optional
         Adjusted p-value column name. The default is None.
-        If None, will be set to 'adj_fisher_pval'.
+        If None, will be set to 'fisher_adj_pval'.
     
     Raises
     ------
@@ -174,7 +176,7 @@ def combine_binary_enrichment_results(enrichment_results_dict, data_type='kl_obj
     if lff_col_name is None:
         lff_col_name = 'log2_freq_factor'
     if pval_col_name is None:
-        pval_col_name = 'adj_fisher_pval'
+        pval_col_name = 'fisher_adj_pval'
     
     index_test = [x.index.to_list() == enrichment_results_tables[0].index.to_list() for x in enrichment_results_tables]
     if not np.all(index_test):
@@ -191,7 +193,7 @@ def combine_binary_enrichment_results(enrichment_results_dict, data_type='kl_obj
     return(lff_data,pval_data)
     
     
-def combine_diff_exp_enrichment_results(enrichment_results_dict, enrichment_type='combined', data_type='kl_object',
+def combine_diff_phos_enrichment_results(enrichment_results_dict, enrichment_type='combined', data_type='kl_object',
                                         lff_col_name=None, pval_col_name=None, cont_kins_col_name=None):
     """
     Function to combine multiple DE enrichment results into lff and pval dataframes for plotting bubblemap.
@@ -211,7 +213,7 @@ def combine_diff_exp_enrichment_results(enrichment_results_dict, enrichment_type
         If None, will be set to 'log2_freq_factor'.
     pval_col_name : str, optional
         Adjusted p-value column name. The default is None.
-        If None, will be set to 'adj_fisher_pval'.
+        If None, will be set to 'fisher_adj_pval'.
     cont_kins_col_name : TYPE, optional
         Contradicting kinases column name. The default is None.
         If None, will be set to 'most_sig_direction'.
@@ -228,8 +230,8 @@ def combine_diff_exp_enrichment_results(enrichment_results_dict, enrichment_type
     pval_data : pd.DataFrame
         Dataframe with adjusted p-value enrichment data of all conditions.
     """
-    
-    exceptions.check_de_enrichment_type(enrichment_type)
+
+    exceptions.check_dp_enrichment_type(enrichment_type)
     if data_type not in ['kl_object','data_frame']:
         raise ValueError('data_type must be either \'kl_object\' or \'data_frame\'.')
     
@@ -251,9 +253,7 @@ def combine_diff_exp_enrichment_results(enrichment_results_dict, enrichment_type
     if lff_col_name is None:
         lff_col_name = 'most_sig_'*(enrichment_type=='combined') + 'log2_freq_factor'
     if pval_col_name is None:
-        pval_col_name = 'most_sig_'*(enrichment_type=='combined') + 'adj_fisher_pval'
-    if (cont_kins_col_name is None) and (enrichment_type == 'combined'):
-        cont_kins_col_name = 'most_sig_direction'
+        pval_col_name = 'most_sig_'*(enrichment_type=='combined') + 'fisher_adj_pval'
     
     index_test = [x.index.to_list() == enrichment_results_tables[0].index.to_list() for x in enrichment_results_tables]
     if not np.all(index_test):
@@ -263,14 +263,14 @@ def combine_diff_exp_enrichment_results(enrichment_results_dict, enrichment_type
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
     if enrichment_type == 'combined':
-        cont_kins_data = pd.DataFrame(index=kinases, columns=conds_list)
+        cont_kins_data = pd.DataFrame(False, index=kinases, columns=conds_list)
     
     for res,cond in zip(enrichment_results_tables,conds_list):
         lff_data[cond] = res[lff_col_name]
         pval_data[cond] = res[pval_col_name]
         if enrichment_type == 'combined':
-            cont_kins_data[cond] = (res[cont_kins_col_name] == '0')
-    
+            cont_kins_data.loc[enrichment_results_dict[cond].contradicting_kins(),cond] = True
+
     if enrichment_type == 'combined':
         return(lff_data,pval_data,cont_kins_data)
     else:
@@ -312,7 +312,7 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
         If None, will be set to 'log2_freq_factor'.
     pval_col_name : str, optional
         Adjusted p-value column name. The default is None.
-        If None, will be set to 'adj_fisher_pval'.
+        If None, will be set to 'fisher_adj_pval'.
 
     Raises
     ------
@@ -367,7 +367,7 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
 """
 
 def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
-                 lff_col='log2_freq_factor', pval_col='adj_fisher_pval',
+                 lff_col='log2_freq_factor', pval_col='fisher_adj_pval',
                  highlight_kins=None, kinases=None, ignore_depleted=False,
                  label_kins=None, adjust_labels=True, labels_fontsize=7,
                  symmetric_xaxis=True, grid=True, max_window=False,
@@ -388,13 +388,11 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
     lff_col : str, optional
         Log frequency factor column name used for volcano plot. The default is 'log2_freq_factor'.
     pval_col : str, optional
-        P-value column name used for volcano plot. The default is 'adj_fisher_pval'.
+        P-value column name used for volcano plot. The default is 'fisher_adj_pval'.
     highlight_kins : list, optional
         List of kinases to be marked in yellow on the kinase enrichment volcano plot.
     kinases : list, optional
         If provided, kinases to plot in the volcano plot. The default is None.
-    ignore_depleted : bool, optional
-        Ignore kinases that their FF is negative (depleted). The default is False.
     label_kins : list, optional
         List of kinases to label on volcano plot. The default is None.
         If none, all significant kinases will be labelled plus any non-significant kinases marked for highlighting.
@@ -447,13 +445,15 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
             highlight_kins = [x for x in highlight_kins if x in kinases]
     
     enrichment_data[pval_col] = enrichment_data[pval_col].astype(float)
-
+    
     if ignore_depleted:
         if 'most_sig_direction' in enrichment_data.columns:
-            signed_log2_ff = (enrichment_data['most_sig_direction'].replace({'-': -1, '+': 1, '0': 0}))*enrichment_data['most_sig_log2_freq_factor']
+            signed_log2_ff = (enrichment_data['most_sig_direction'].replace({'-': -1, '+': 1}))*enrichment_data['most_sig_log2_freq_factor']
             enrichment_data.loc[(signed_log2_ff < 0), 'most_sig_log2_freq_factor'] = 0
-            enrichment_data.loc[(signed_log2_ff < 0), 'most_sig_adj_fisher_pval'] = 1
+            enrichment_data.loc[(signed_log2_ff < 0), 'most_sig_fisher_pval'] = 1
+            enrichment_data.loc[(signed_log2_ff < 0), 'most_sig_fisher_adj_pval'] = 1
         else:
+            print('Warning: \'most_sig_direction\' column does not exist, if ignore_depleted is True - all kinases with lff<0 will be ignored.')
             depleted_kins = (enrichment_data[lff_col] < 0)
             enrichment_data.loc[depleted_kins, lff_col] = 0
             enrichment_data.loc[depleted_kins, pval_col] = 1
@@ -537,14 +537,151 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
         return fig
 
 
+def plot_3x3_volcanos(dp_data, kin_type, kl_method, kl_thresh, dp_lfc_col, dp_lfc_thresh=[0,0.5,1],
+                      dp_pval_col=None, dp_pval_thresh=[0.1,0.1,0.1], drop_dp_na=True, kinases=None,
+                      seq_col=None, ke_sig_lff=0, ke_sig_pval=0.1,
+                      plot_cont_kins=True, highlight_kins=None, ignore_depleted=True,
+                      label_kins=None, adjust_labels=True, labels_fontsize=7, title=None,
+                      plot=True, save_fig=False, return_fig=False,
+                      suppress_warnings=True,
+                      scoring_kwargs={},
+                      diff_phos_kwargs={},
+                      enrichment_kwargs={},
+                      plotting_kwargs={}):
+    """
+    Returns a 3x3 figure containing downregulated, upregulated, and combined volcano plots of the Kinase Library differential phosphorylation enrichment results for three logFC thresholds.
+
+    Parameters
+    ----------
+    dp_data : pd.DataFrame
+        DataFrame containing differential phosphorylation data (must include sequence and logFC columns).
+    kin_type : str
+        Kinase type ('ser_thr' or 'tyrosine').
+    kl_method : str
+        Kinase Library scoring method ('score', 'score_rank', 'percentile', 'percentile_rank').
+    kl_thresh : int
+        The threshold to be used for the specified kl_method.
+    dp_lfc_col : str
+        LogFC column name for Kinase Library enrichment analysis.
+    dp_lfc_thresh : list, optional
+        List of three logFC cuttoffs used to define up, down, and unregulated sites.
+    dp_pval_col : str, optional
+        P-value column name used to define a site's significance.
+    dp_pval_thresh : list, optional
+        List of three significance threshold corresponding to the p-value column. The default is [0.1]*3.
+    drop_dp_na : bool, optional
+        Drop dp_data rows with NaN values in the logFC column. The default is True.
+    kinases : list, optional
+        If provided, kinase enrichment will only be calculated for the specified kinase list, otherwise, all kinases of the specified kin_type will be included. The default is None.
+    seq_col : str, optional
+        Substrates column name in the differential phosphorylation data. The default is None (will be set as _global_vars.default_seq_col).
+    ke_sig_lff : float, optional
+        Significance threshold for logFF in the enrichment results. The default is 0.
+    ke_sig_pval : float, optional
+        Significance threshold for and adjusted p-value in the enrichment results. The default is 0.1.
+    plot_cont_kins : bool, optional
+        If False, kinases enriched in both upregulated and downregulated sites will be excluded from the volcano.
+        If True, they will be highlighted in yellow.
+    highlight_kins : list, optional
+        List of kinases to be marked in yellow on the kinase enrichment volcano plots.
+    ignore_depleted : bool, optional
+            Ignore kinases that their FF is negative (depleted). The default is True.
+    label_kins : list, optional
+        List of kinases to label on volcano plots. The default is None.
+        If none, all significant kinases will be labelled plus any non-significant kinases marked for highlighting.
+    adjust_labels : bool, optional
+        If True, labels will be adjusted to avoid other markers and text on volcano plots. The default is True.
+    title : str, optional
+        Title for the figure. The default is False.
+    plot : bool, optional
+        Whether or not to plot the produced enrichment figure. The default is True.
+        Will be automatically changed to False if an axis is provided.
+    save_fig : str, optional
+        Path to file for saving the figure. The default is False.
+        Must be False if an axis is provided.
+    return_fig : bool, optional
+        If true, the figure will be returned as a plt.figure object. The default is False.
+    suppress_warnings : bool, optional
+        Do not print warnings. The default is False.
+    scoring_kwargs : dict, optional
+        Optional keyword arguments to be passed to the scoring function.
+    diff_phos_kwargs : dict, optional
+        Optional keyword arguments to be passed to the PhosphoProteomics initialization function.
+    enrichment_kwargs : dict, optional
+        Optional keyword arguments to be passed to the kinase_enrichment function.
+    plotting_kwargs : dict, optional
+        Optional keyword arguments to be passed to the plot_volcano function.
+        
+    Returns
+    -------
+    If return_fig, the 3x3 figure containing downregulated, upregulated, and combined kinase enrichment volcano plots.
+    """
+    
+    if len(dp_lfc_thresh) != 3:
+        raise ValueError('\'dp_lfc_thresh\' must contain exactly three values.')
+    if dp_pval_col is not None and len(dp_pval_thresh) != 3:
+        raise ValueError('\'dp_pval_thresh\' must contain exactly three values.')
+    
+    if seq_col is None:
+        seq_col = _global_vars.default_seq_col
+    
+    exceptions.check_kl_method(kl_method)
+    print('Calculating scores for all sites')
+    dp_data_pps = pps.PhosphoProteomics(data=dp_data, seq_col=seq_col, **diff_phos_kwargs)
+    if kl_method in ['score','score_rank']:
+        scores = dp_data_pps.score(kin_type=kin_type, kinases=kinases, values_only=True, **scoring_kwargs)
+    elif kl_method in ['percentile','percentile_rank']:
+        percentiles = dp_data_pps.percentile(kin_type=kin_type, kinases=kinases, values_only=True, **scoring_kwargs)
+        
+    fig = plt.figure(constrained_layout=True)
+    figManager = fig.canvas.manager
+    figManager.window.showMaximized()
+    subfigs = fig.subfigures(nrows=3, ncols=1)
+        
+    for i,(lfc,pval) in enumerate(zip(dp_lfc_thresh,dp_pval_thresh)):
+        
+        subfigs[i].suptitle(r'$\bf{' + f'DE\ logFC\ threshold:\ {lfc}' + f'\ /\ DE\ p-value\ threshold:\ {pval}'*(dp_pval_col is not None) + '}$')
+        ax = subfigs[i].subplots(nrows=1, ncols=3)
+        
+        print(f'\nLogFC threshold: {lfc}' + f' / p-value threshold: {pval}'*(dp_pval_col is not None))
+        diff_phos_data = DiffPhosData(dp_data=dp_data, kin_type=kin_type,
+                                    lfc_col=dp_lfc_col, lfc_thresh=lfc,
+                                    pval_col=dp_pval_col, pval_thresh=pval,
+                                    seq_col=seq_col, drop_dp_na=drop_dp_na,
+                                    **diff_phos_kwargs)
+        if kl_method in ['score','score_rank']:
+            diff_phos_data.submit_scores(kin_type=kin_type, scores=scores, suppress_messages=suppress_warnings)
+        elif kl_method in ['percentile','percentile_rank']:
+            diff_phos_data.submit_percentiles(kin_type=kin_type, percentiles=percentiles, suppress_messages=suppress_warnings)
+        
+        enrich_results = diff_phos_data.kinase_enrichment(kl_method=kl_method, kl_thresh=kl_thresh,
+                                                       **enrichment_kwargs)
+            
+        enrich_results.plot_down_up_comb_volcanos(sig_lff=ke_sig_lff, sig_pval=ke_sig_pval, kinases=kinases,
+                                                  plot_cont_kins=plot_cont_kins, highlight_kins=highlight_kins, ignore_depleted=ignore_depleted,
+                                                  label_kins=label_kins, adjust_labels=adjust_labels, labels_fontsize=labels_fontsize, ax=ax,
+                                                  **plotting_kwargs)
+    
+    fig.suptitle(title)
+    
+    if save_fig:
+        fig.savefig(save_fig, dpi=1000)
+        
+    if not plot:
+        plt.close(fig)
+            
+    if return_fig:
+        return fig
+    
+    
 def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1, kinases=None,
-                   plot_cont_kins=True, highlight_cont_kins=True, sort_kins_by='family', cond_order=None,
-                   only_sig_kins=False, only_sig_conds = False,
+                   plot_cont_kins=True, highlight_cont_kins=True, sort_kins_by='family',
+                   cond_order=None, only_sig_kins=False, only_sig_conds = False,
                    kin_clust=False, condition_clust=False, cluster_by=None,
                    cluster_by_matrix=None, cluster_method='average',
                    color_kins_by='family', kin_categories_colors=None, cond_colors=None,
                    title=None, family_legned=True, pval_legend=True, lff_cbar=True,
-                   pval_legend_spacing=None, save_fig=False,
+                   pval_legend_spacing=None, save_fig=False, max_window=True,
                    lff_clim=(-2,2), max_pval_size=4, bubblesize_range=(10,100),
                    num_panels=6, vertical=True, constrained_layout=True,
                    xaxis_label='Condition', yaxis_label='Kinase',
@@ -607,6 +744,9 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     save_fig : str, optional
         Path to file for saving the volcano plot. The default is False.
         Must be False if an axis is provided.
+    max_window : bool, optional
+        Maximize the plotting window. The default is True.
+        Must be False if an axis is provided to the function.
     lff_clim : tuple of float, optional
         Color limit for the log frequency factors on the bubblemap. If not specified, the default is (-2,2).
     max_pval_size : float, optional
@@ -696,11 +836,12 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         sorted_highlight_data = cont_kins.loc[kins_order,cond_order]
     else:
         sorted_highlight_data = pd.DataFrame(False, index=sorted_lff_data.index, columns=sorted_lff_data.columns)
-    
+
     sig_data = (abs(sorted_lff_data) >= sig_lff) & (sorted_pval_data <= sig_pval)
     sig_lff_data = sorted_lff_data.mask(~sig_data)
     sig_pval_data = sorted_pval_data.mask(~sig_data)
     if not plot_cont_kins:
+        sig_lff_data = sig_lff_data.mask(cont_kins)
         sig_pval_data = sig_pval_data.mask(cont_kins)
     
     if only_sig_kins:
@@ -734,6 +875,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             sig_lff_data = sig_lff_data.iloc[hierarchy.leaves_list(Z)]
             minus_log10_pval_data = minus_log10_pval_data.iloc[hierarchy.leaves_list(Z)]
             sorted_highlight_data = sorted_highlight_data.iloc[hierarchy.leaves_list(Z)]
+    
     if condition_clust:
         if cluster_by is None:
             raise ValueError('If condition_clust is True, cluster_by must be specified.')
@@ -798,7 +940,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
 
         sns.scatterplot(x='kinase', y='condition', data=lff_pval_data, legend=False, ax=ax, alpha=0, size=0)
         sns.scatterplot(x='kinase', y='condition', data=sig_lff_pval_data, hue='lff', hue_norm=lff_clim, palette='coolwarm', size='pval', sizes=bubblesize_range, size_norm=pval_slim, linewidth=1, edgecolor='black', legend=False, ax=ax)
-        sns.scatterplot(x='kinase', y='condition', data=sig_lff_pval_data[sig_lff_pval_data['highlight']], hue='lff', hue_norm=lff_clim, palette='coolwarm', size='pval', sizes=bubblesize_range, size_norm=pval_slim, linewidth=1, edgecolor='yellow', legend=False, ax=ax)
+        if not sig_lff_pval_data[sig_lff_pval_data['highlight']].empty:
+            sns.scatterplot(x='kinase', y='condition', data=sig_lff_pval_data[sig_lff_pval_data['highlight']], hue='lff', hue_norm=lff_clim, palette='coolwarm', size='pval', sizes=bubblesize_range, size_norm=pval_slim, linewidth=1, edgecolor='yellow', legend=False, ax=ax)
 
         minx = ax.get_xticks()[0]
         maxx = ax.get_xticks()[-1]
@@ -865,15 +1008,17 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         patches = [mpatches.Patch(color=x[1], label=x[0]) for x in kin_categories_colors.items()]
         axes[0].legend(handles=patches, loc='center', title='Family', facecolor='white')
     axes[0].axis('off')
-
+    
     if pval_legend:
         size_legend_data = pd.DataFrame({'x': 0, 'y': 0, 'sizes': np.linspace(pval_slim[0], pval_slim[1], 4, dtype=int)})
         sns.scatterplot(x='x', y='y', data=size_legend_data, size='sizes', sizes=bubblesize_range, size_norm=pval_slim,
                         alpha=0, ax=axes[1])
         handles,labels  =  axes[1].get_legend_handles_labels()
         for i in range(len(handles)):
-            handles[i].set_edgecolor('black')
-            handles[i].set_facecolor('white')
+            handles[i].set_markeredgecolor('black')
+            handles[i].set_markeredgewidth(1)
+            handles[i].set_markerfacecolor('white')
+            handles[i].set_alpha(1)
         axes[1].legend(handles=handles, labels=[str(10**-x) for x in size_legend_data['sizes'][:3]] + ['<'+str(10**int(-(size_legend_data['sizes'][3])))],
                        title='Adj. p-value', loc='center', labelspacing=pval_legend_spacing, facecolor='white')
     axes[1].axis('off')
@@ -888,8 +1033,9 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         axes[2].axis('off')
     
     subfigs[0].suptitle(title, fontsize=16)
-    figManager = plt.get_current_fig_manager()
-    figManager.window.showMaximized()
+    if max_window:
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
     
     if save_fig:
         fig.savefig(save_fig, dpi=1000)

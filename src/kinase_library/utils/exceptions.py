@@ -1,7 +1,7 @@
 """
-###############################
-# Kinase Library - Exceptions #
-###############################
+###################################
+# The Kinase Library - Exceptions #
+###################################
 """
 
 from ..utils import _global_vars, utils
@@ -40,8 +40,12 @@ def check_kin_list_type(kin_list, kin_type=None):
             raise Exception('All kinases must be the same type (\'{}\' is not a \'{}\' kinase).'.format(kin,kin_type))
 
 def check_mat_type(mat_type):
-    if mat_type not in _global_vars.valid_mat_types:
-        raise ValueError('mat_type must be one of the following: {}'.format(_global_vars.valid_mat_types))
+    if mat_type not in _global_vars.valid_mat_type:
+        raise ValueError('mat_type must be one of the following: {}'.format(_global_vars.valid_mat_type))
+
+def check_mat_scale(mat_scale):
+    if mat_scale not in _global_vars.valid_mat_scale:
+        raise ValueError('mat_scale must be one of the following: {}'.format(_global_vars.valid_mat_scale))
 
 def check_name_type(name_type):
     if name_type not in _global_vars.valid_name_types:
@@ -115,13 +119,13 @@ def check_enrichment_data_type(data_type):
     if data_type not in _global_vars.valid_enrichment_data_type:
         raise ValueError('data_type must be one of the following: {}'.format(_global_vars.valid_enrichment_data_type))
 
-def check_de_enrichment_type(enrich_type):
-    if enrich_type not in _global_vars.valid_de_enrichment_type:
-        raise ValueError('enrichment_type must be one of the following: {}'.format(_global_vars.valid_de_enrichment_type))
+def check_dp_enrichment_type(enrich_type):
+    if enrich_type not in _global_vars.valid_dp_enrichment_type:
+        raise ValueError('enrichment_type must be one of the following: {}'.format(_global_vars.valid_dp_enrichment_type))
 
-def check_de_sites_type(sites_type):
-    if sites_type not in _global_vars.valid_de_sites_type:
-        raise ValueError('sites_type must be one of the following: {}'.format(_global_vars.valid_de_sites_type))
+def check_dp_sites_type(sites_type):
+    if sites_type not in _global_vars.valid_dp_sites_type:
+        raise ValueError('sites_type must be one of the following: {}'.format(_global_vars.valid_dp_sites_type))
 
 def check_kl_method(kl_method):
     if kl_method not in _global_vars.valid_kl_method:

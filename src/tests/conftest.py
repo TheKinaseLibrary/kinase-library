@@ -23,23 +23,23 @@ def phosphoproteomics_tyrosine_output_path(dirname):
 
 
 @pytest.fixture(scope="session")
-def diff_exp_ser_thr_input_path(dirname):
-    return os.path.join(dirname, "data/inputs/diff_exp_ser_thr_input.csv")
+def diff_phos_ser_thr_input_path(dirname):
+    return os.path.join(dirname, "data/inputs/diff_phos_ser_thr_input.csv")
 
 
 @pytest.fixture(scope="session")
-def diff_exp_ser_thr_output_path(dirname):
-    return os.path.join(dirname, "data/outputs/diff_exp_ser_thr_output.csv")
+def diff_phos_ser_thr_output_path(dirname):
+    return os.path.join(dirname, "data/outputs/diff_phos_ser_thr_output.csv")
 
 
 @pytest.fixture(scope="session")
-def diff_exp_tyrosine_input_path(dirname):
-    return os.path.join(dirname, "data/inputs/diff_exp_tyrosine_input.csv")
+def diff_phos_tyrosine_input_path(dirname):
+    return os.path.join(dirname, "data/inputs/diff_phos_tyrosine_input.csv")
 
 
 @pytest.fixture(scope="session")
-def diff_exp_tyrosine_output_path(dirname):
-    return os.path.join(dirname, "data/outputs/diff_exp_tyrosine_output.csv")
+def diff_phos_tyrosine_output_path(dirname):
+    return os.path.join(dirname, "data/outputs/diff_phos_tyrosine_output.csv")
 
 
 @pytest.fixture(scope="session")

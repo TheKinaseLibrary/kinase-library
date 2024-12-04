@@ -6,13 +6,20 @@
 
 from .objects.core import *
 from .objects.phosphoproteomics import *
-from .objects.differential_expression import *
+
+from .enrichment.binary_enrichment import *
+from .enrichment.differential_phosphorylation import *
+from .enrichment.mea import *
 
 from .utils import _global_vars
 from .utils.utils import *
 
 from .modules.data import *
 from .modules.enrichment import *
+
+#%%
+
+__version__ = "1.0.0"
 
 #%% Loading scored phosphoproteome one time per session
 
