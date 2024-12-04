@@ -20,6 +20,8 @@ from tqdm import tqdm
 from ..utils import _global_vars, exceptions
 from . import data
 
+pd.set_option('future.no_silent_downcasting', True)
+
 # mpl.use("Qt5Agg")
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
