@@ -113,6 +113,9 @@ Please cite the following papers when using this package:
 **For the tyrosine kinome:**
 > Yaron-Barir, T. M., Joughin, B. A., Huntsman, E. M., Kerelsky, A., Cizin, D. M., Cohen, B. M., ... & Johnson, J. L. (2024). **The intrinsic substrate specificity of the human tyrosine kinome**. _Nature_, 1-8. [https://doi.org/10.1038/s41586-024-07407-y](https://doi.org/10.1038/s41586-024-07407-y)
 
+**If you are using the MEA tool, please also cite:**
+> Fang, Z., Liu, X., & Peltz, G. (2023). **GSEApy: a comprehensive package for performing gene set enrichment analysis in Python**. _Bioinformatics_, 39(1), btac757.
+
 ## License
 
 This package is distributed under the Creative Commons License. See `LICENSE` for more information.
