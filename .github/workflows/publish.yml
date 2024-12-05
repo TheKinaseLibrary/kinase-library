@@ -27,7 +27,7 @@ jobs:
         run: python -m build
       - name: Publish PyPi package
         uses: pypa/gh-action-pypi-publish@release/v1
-      - name: Publish GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "dist/*.tar.gz"
+      # - name: Publish GitHub release
+      #   uses: ncipollo/release-action@v1
+      #   with:
+      #     artifacts: "dist/*.tar.gz"
