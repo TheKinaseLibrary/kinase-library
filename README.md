@@ -1,6 +1,6 @@
 <div align="center">
     <picture>
-        <img src="https://github.com/TheKinaseLibrary/kinase-library/raw/v1.0.1/src/notebooks/images/logo_qr_combined.png" alt="The Kinase Library" width="50%">
+        <img src="https://i.imgur.com/TvQ8LmC.png" alt="The Kinase Library" width="50%">
     </picture>
 
 <hr/>
