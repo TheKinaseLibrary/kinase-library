@@ -19,7 +19,7 @@ from .modules.enrichment import *
 
 #%%
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 #%% Loading scored phosphoproteome one time per session
 
