@@ -1,15 +1,21 @@
 <div align="center">
     <picture>
-        <img src="https://i.imgur.com/TvQ8LmC.png" alt="The Kinase Library" width="50%">
+        <img src="https://i.imgur.com/Y6PmRsQ.jpeg" alt="The Kinase Library" width="50%">
     </picture>
 
 <hr/>
 
 # [Click here for The Kinase Library Web Tool](https://kinase-library.phosphosite.org)
 
+<picture>
+    <img src="https://i.imgur.com/sWUA4Rk.png" alt="The Kinase Library QR Code" width="20%">
+</picture>
+
 [![Twitter Follow](https://img.shields.io/twitter/follow/KinaseLibrary?style=social)](https://twitter.com/KinaseLibrary) &ensp;
 [![License: CC BY-NC-SA 3.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%203.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/3.0/) &ensp;
 [![PyPI Latest Release](https://img.shields.io/pypi/v/kinase-library.svg)](https://pypi.org/project/kinase-library/)
+
+<hr/>
 
 </div>
 
@@ -108,14 +114,15 @@ This is the expected output from using the PhosphoProteomics.predict() function.
 Please cite the following papers when using this package:
 
 **For the serine/threonine kinome:**
-> Johnson, J. L., Yaron, T. M., Huntsman, E. M., Kerelsky, A., Song, J., Regev, A., ... & Cantley, L. C. (2023). **An atlas of substrate specificities for the human serine/threonine kinome**. _Nature_, 613(7945), 759-766. [http://doi.org/10.1074/mcp.TIR118.000943](https://doi.org/10.1038/s41586-022-05575-3)
+> Johnson, J. L., Yaron, T. M., Huntsman, E. M., Kerelsky, A., Song, J., Regev, A., ... & Cantley, L. C. (2023). **An atlas of substrate specificities for the human serine/threonine kinome**. _Nature_, 613(7945), 759-766. [https://doi.org/10.1074/mcp.TIR118.000943](https://doi.org/10.1038/s41586-022-05575-3)
 
 **For the tyrosine kinome:**
 > Yaron-Barir, T. M., Joughin, B. A., Huntsman, E. M., Kerelsky, A., Cizin, D. M., Cohen, B. M., ... & Johnson, J. L. (2024). **The intrinsic substrate specificity of the human tyrosine kinome**. _Nature_, 1-8. [https://doi.org/10.1038/s41586-024-07407-y](https://doi.org/10.1038/s41586-024-07407-y)
 
 **If you are using the MEA tool, please also cite:**
-> Fang, Z., Liu, X., & Peltz, G. (2023). **GSEApy: a comprehensive package for performing gene set enrichment analysis in Python**. _Bioinformatics_, 39(1), btac757.
+> Fang, Z., Liu, X., & Peltz, G. (2023). **GSEApy: a comprehensive package for performing gene set enrichment analysis in Python**. _Bioinformatics_, 39(1), btac757. [https://doi.org/10.1093/bioinformatics/btac757](https://doi.org/10.1093/bioinformatics/btac757)
 
 ## License
 
 This package is distributed under the Creative Commons License. See `LICENSE` for more information.
+
