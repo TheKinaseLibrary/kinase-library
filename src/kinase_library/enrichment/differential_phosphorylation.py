@@ -4,14 +4,12 @@
 #####################################################
 """
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 
 from ..utils import _global_vars, exceptions
-from ..modules import data, enrichment
-from ..objects import core
+from ..modules import enrichment
 from ..objects import phosphoproteomics as pps
 from ..enrichment import binary_enrichment as be
 from ..logger import logger

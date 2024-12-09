@@ -4,13 +4,11 @@
 ########################################################
 """
 
-import numpy as np
 import pandas as pd
 import gseapy as gp
 
-from ..utils import _global_vars, exceptions, utils
+from ..utils import _global_vars, exceptions
 from ..modules import data, enrichment
-from ..objects import core
 from ..objects import phosphoproteomics as pps
 from ..logger import logger
 
