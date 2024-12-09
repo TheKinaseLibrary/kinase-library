@@ -3,18 +3,12 @@
 # The Kinase Library - Phosphoproteomics #
 ##########################################
 """
-
-import os
 import numpy as np
 import pandas as pd
-import scipy.stats as st
-from statsmodels.stats import multitest
-from tqdm import tqdm
-import gseapy as gp
-tqdm.pandas()
+import pyarrow.parquet as pq
 
 from ..utils import _global_vars, exceptions, utils
-from ..modules import data, enrichment
+from ..modules import data
 from . import core
 from ..logger import logger
 
@@ -461,7 +455,6 @@ class PhosphoProteomics(object):
         
         print('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
         logger.info('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
-        tqdm.pandas()
         percent_output = scored_phosprot.progress_apply(lambda x: x.sort_values().searchsorted(score[x.name], side='right'))/len(scored_phosprot)*100
         percent_output.index = score.index
         

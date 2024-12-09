@@ -17,6 +17,10 @@ from .utils.utils import *
 from .modules.data import *
 from .modules.enrichment import *
 
+from .logger import TqdmToLoggerWithStatus, logger
+tqdm_out = TqdmToLoggerWithStatus(logger)
+tqdm.pandas(file=tqdm_out, ascii=False)
+
 #%%
 
 __version__ = "1.0.1"

@@ -9,14 +9,10 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 from statsmodels.stats import multitest
-from tqdm import tqdm
-tqdm.pandas()
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
-from ..objects import core
 from ..objects import phosphoproteomics as pps
-from ..logger import logger
 
 #%%
 
