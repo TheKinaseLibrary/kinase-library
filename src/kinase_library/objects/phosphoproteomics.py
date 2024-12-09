@@ -7,6 +7,7 @@
 import os
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 import scipy.stats as st
 from statsmodels.stats import multitest
 import gseapy as gp
