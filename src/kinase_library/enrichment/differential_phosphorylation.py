@@ -6,7 +6,6 @@
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import warnings
 
@@ -16,7 +15,6 @@ from ..objects import core
 from ..objects import phosphoproteomics as pps
 from ..enrichment import binary_enrichment as be
 from ..logger import logger
-tqdm.pandas()
 
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42

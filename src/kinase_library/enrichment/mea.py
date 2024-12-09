@@ -6,9 +6,7 @@
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 import gseapy as gp
-tqdm.pandas()
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
