@@ -101,8 +101,8 @@ class RankedPhosData(object):
     
     def _create_kin_sub_sets(self, thresh, comp_direction):
         
-        print('\nGenerating kinase-substartes sets')
-        logger.info('Generating kinase-substartes sets')
+        print('\nGenerating kinase-substrates sets')
+        logger.info('Generating kinase-substrates sets')
         kin_sub_sets = enrichment.create_kin_sub_sets(data_values=self.data_kl_values, threshold=thresh, comp_direction=comp_direction)
         self.kin_sub_sets = kin_sub_sets
         
