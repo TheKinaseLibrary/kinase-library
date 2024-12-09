@@ -141,6 +141,9 @@ class RankedPhosData(object):
         """
         
         exceptions.check_kl_method(kl_method)
+        
+        if getattr(self.dp_data_pps, kin_type+'_data').empty:
+            raise ValueError(f'Data does not contain {kin_type} substrates.')
 
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
