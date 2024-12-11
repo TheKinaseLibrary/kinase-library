@@ -23,7 +23,8 @@ extensions = [
     'sphinx.ext.viewcode',        # Add links to highlighted source code
     'sphinx.ext.autosummary',     # Generate summary tables for modules/classes
     'sphinx_autodoc_typehints',   # Show type hints in documentation
-    'nbsphinx',                   # For integrating Jypter Notebooks
+    'nbsphinx',                   # Integrating Jypter Notebooks
+    'myst_parser',                # Showing README.md
 ]
 
 # Enable automatic generation of summary tables
