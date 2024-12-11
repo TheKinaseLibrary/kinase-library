@@ -27,6 +27,11 @@ extensions = [
     'myst_parser',                # Showing README.md
 ]
 
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
 # Enable automatic generation of summary tables
 autosummary_generate = True
 

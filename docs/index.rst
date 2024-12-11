@@ -3,9 +3,5 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the Kinase Library documentation!
+The Kinase Library documentation - Coming Soon!
 ============================================
-
-.. include:: ../README.md
-   :parser: myst_parser.sphinx_
-   :start-after: <!-- index.rst content start -->
