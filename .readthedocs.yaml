@@ -19,4 +19,4 @@ sphinx:
 # Python configuration
 python:
   install:
-    - requirements: requirements.txt
+    - requirements: src/requirements.txt
