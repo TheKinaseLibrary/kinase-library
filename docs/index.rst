@@ -7,5 +7,3 @@ Welcome to the Kinase Library documentation!
 ============================================
 
 .. include:: ../README.md
-   :parser: myst_parser.sphinx_
-   :start-after: <!-- index.rst content start -->
