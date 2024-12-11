@@ -13,3 +13,4 @@ seaborn~=0.13.2
 statsmodels~=0.14.2
 tqdm~=4.66.5
 sphinx-autodoc-typehints~=2.5.0
+sphinx-rtd-theme~=3.0.2
