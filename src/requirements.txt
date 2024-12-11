@@ -12,3 +12,4 @@ scipy~=1.14.1
 seaborn~=0.13.2
 statsmodels~=0.14.2
 tqdm~=4.66.5
+sphinx-autodoc-typehints~=2.5.0
