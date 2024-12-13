@@ -11,7 +11,7 @@ authors = [
     { name = "sean-landry", email = "sean.landry@cellsignal.com" },
 ]
 description = "The Kinase Library Project: a Global Atlas of the Human Protein Kinome"
-requires-python = ">=3.10, <3.12"
+requires-python = ">=3.10, <=3.13"
 keywords = [
     "kinase",
     "phosphorylation",
