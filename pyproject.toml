@@ -30,8 +30,9 @@ keywords = [
 license = { text = "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported" }
 
 [project.urls]
-Homepage = "https://github.com/TheKinaseLibrary/kinase-library"
+Homepage = "https://kinase-library.phosphosite.org"
 Source = "https://github.com/TheKinaseLibrary/kinase-library"
+Documentation = "https://kinase-library.readthedocs.io"
 
 [tool.setuptools.dynamic]
 readme = { file = "README.md", content-type = "text/markdown" }
