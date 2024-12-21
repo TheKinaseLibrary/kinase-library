@@ -640,7 +640,7 @@ def plot_3x3_volcanos(dp_data, kin_type, kl_method, kl_thresh, dp_lfc_col, dp_lf
         
     for i,(lfc,pval) in enumerate(zip(dp_lfc_thresh,dp_pval_thresh)):
         
-        subfigs[i].suptitle(r'$\bf{' + f'DE\ logFC\ threshold:\ {lfc}' + f'\ /\ DE\ p-value\ threshold:\ {pval}'*(dp_pval_col is not None) + '}$')
+        subfigs[i].suptitle(r'$\bf{' + f'DE logFC threshold: {lfc}' + f' / DE p-value threshold: {pval}'*(dp_pval_col is not None) + '}$')
         ax = subfigs[i].subplots(nrows=1, ncols=3)
         
         print(f'\nLogFC threshold: {lfc}' + f' / p-value threshold: {pval}'*(dp_pval_col is not None))
