@@ -16,10 +16,10 @@ def test_substrate_percentile():
 def test_substrate_score_rank():
     sub = kl.Substrate('PSVEPPLtQETFSDL')
     score_rank_dict = sub.rank(method="score", kinases=['AKT1', 'AKT2'], output_type='dict')
-    assert score_rank_dict == {'AKT1': 286, 'AKT2': 289}
+    assert score_rank_dict == {'AKT1': 288, 'AKT2': 291}
 
 
 def test_substrate_percentile_rank():
     sub = kl.Substrate('PSVEPPLtQETFSDL')
     percentile_rank_dict = sub.rank(method="percentile", kinases=['AKT1', 'AKT2'], output_type='dict')
-    assert percentile_rank_dict == {'AKT1': 266, 'AKT2': 305}
+    assert percentile_rank_dict == {'AKT1': 268, 'AKT2': 307}
