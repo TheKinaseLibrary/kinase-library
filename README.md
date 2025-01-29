@@ -109,6 +109,18 @@ This is the expected output from using the PhosphoProteomics.predict() function.
 
 </div>
 
+## Data Updates
+
+<div>
+
+| Release | Date | New | Updated | Removed | Total Ser/Thr | Total Tyrosine | Total Non-Canonicals (Tyrosine) | Notes | 
+|:-------:|:----:|:---:|:-------:|:-------:|:-------------:|:--------------:|:-------------------------------:|:-----:|
+| **v0.1.0** | Oct 30, 2024 | _None_ | _None_ | _None_ | 303 | 78 | 15 | Legacy version - data as described in papers |
+| **v1.0.0** | Dec 5, 2024 | ALK1, ALK7, TSSK3, TSSK4, ULK3, WNK2 | CAMKK2, CDK3, CDK5, CDK13, CHAK1, CLK3, GRK1, GRK4, GRK5, ICK, IKKA, LATS1, MEKK6, MLK3, MNK2, MST1, NIM1, PASK, PBK, PKN3, SKMLCK, SMG1, VRK2, WNK3 | _None_ | 309 | 78 | 15 | |
+| **v1.0.4** | Jan 28, 2025 | CDKL2 | CK1D, GRK7, SRPK2 | _None_ | 310 | 78 | 15 | Fixed processing error for PDHK1 and PDHK4 |
+
+</div>
+
 ## Citations
 
 Please cite the following papers when using this package:
@@ -118,9 +130,6 @@ Please cite the following papers when using this package:
 
 **For the tyrosine kinome:**
 > Yaron-Barir, T. M., Joughin, B. A., Huntsman, E. M., Kerelsky, A., Cizin, D. M., Cohen, B. M., ... & Johnson, J. L. (2024). **The intrinsic substrate specificity of the human tyrosine kinome**. _Nature_, 1-8. [https://doi.org/10.1038/s41586-024-07407-y](https://doi.org/10.1038/s41586-024-07407-y)
-
-**If you are using the MEA tool, please also cite:**
-> Fang, Z., Liu, X., & Peltz, G. (2023). **GSEApy: a comprehensive package for performing gene set enrichment analysis in Python**. _Bioinformatics_, 39(1), btac757. [https://doi.org/10.1093/bioinformatics/btac757](https://doi.org/10.1093/bioinformatics/btac757)
 
 ## License
 
