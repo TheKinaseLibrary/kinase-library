@@ -4,6 +4,7 @@
 #####################################################
 """
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
@@ -557,11 +558,6 @@ class DiffPhosEnrichmentResults(object):
             List of kinases enriched above the designated p-value and freq_factor thresholds in the upregulated data.
         """
 
-        if adj_pval:
-            pval_col = 'fisher_adj_pval'
-        else:
-            pval_col = 'fisher_pval'
-
         return self.upreg_enrichment_results.enriched_kins(sig_lff=sig_lff, sig_pval=sig_pval, adj_pval=adj_pval)
 
 
@@ -584,11 +580,6 @@ class DiffPhosEnrichmentResults(object):
             List of kinases enriched above the designated p-value and freq_factor thresholds in the upregulated data.
         """
 
-        if adj_pval:
-            pval_col = 'fisher_adj_pval'
-        else:
-            pval_col = 'fisher_pval'
-
         return self.downreg_enrichment_results.enriched_kins(sig_lff=sig_lff, sig_pval=sig_pval, adj_pval=adj_pval)
 
 
@@ -610,11 +601,6 @@ class DiffPhosEnrichmentResults(object):
         contradicting_kins : list
             List of kinases enriched above the designated p-value and freq_facor thresholds in both the upregulated and downregulated data.
         """
-
-        if adj_pval:
-            pval_col = 'fisher_adj_pval'
-        else:
-            pval_col = 'fisher_pval'
 
         return [x for x in self.activated_kins(sig_lff=sig_lff, sig_pval=sig_pval, adj_pval=adj_pval) if
                 x in self.inhibited_kins(sig_lff=sig_lff, sig_pval=sig_pval, adj_pval=adj_pval)]
