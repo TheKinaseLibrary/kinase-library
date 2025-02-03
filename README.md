@@ -115,7 +115,7 @@ This is the expected output from using the PhosphoProteomics.predict() function.
 
 | Release | Date | New | Updated | Removed | Total Ser/Thr | Total Tyrosine | Total Non-Canonicals (Tyrosine) | Notes | 
 |:-------:|:----:|:---:|:-------:|:-------:|:-------------:|:--------------:|:-------------------------------:|:-----:|
-| **v1.0.4** | Jan 28, 2025 | CDKL2 | CK1D, GRK7, SRPK2 | _None_ | 310 | 78 | 15 | Fixed processing error for PDHK1 and PDHK4 |
+| **v1.1.0** | Feb 2, 2025 | CDKL2 | CK1D, GRK7, SRPK2 | _None_ | 310 | 78 | 15 | Fixed processing error for PDHK1 and PDHK4 |
 | **v1.0.0** | Dec 5, 2024 | ALK1, ALK7, TSSK3, TSSK4, ULK3, WNK2 | CAMKK2, CDK3, CDK5, CDK13, CHAK1, CLK3, GRK1, GRK4, GRK5, ICK, IKKA, LATS1, MEKK6, MLK3, MNK2, MST1, NIM1, PASK, PBK, PKN3, SKMLCK, SMG1, VRK2, WNK3 | _None_ | 309 | 78 | 15 | |
 | **v0.1.0** | Oct 30, 2024 | _None_ | _None_ | _None_ | 303 | 78 | 15 | Legacy version - data as described in papers |
 
