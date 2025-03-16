@@ -28,15 +28,15 @@ class RankedPhosData(object):
                  drop_invalid_subs=True,
                  new_seq_phos_res_cols=True,
                  suppress_warnings=False):
-        
+
         if seq_col is None:
             seq_col = _global_vars.default_seq_col
-        
+
         self.dp_data = dp_data
         self.rank_col = rank_col
         self.dp_data_pps = pps.PhosphoProteomics(dp_data, seq_col=seq_col, pad=subs_pad, pp=pp, drop_invalid_subs=drop_invalid_subs, new_seq_phos_res_cols=new_seq_phos_res_cols, suppress_warnings=suppress_warnings)
-        
-    
+
+
     def submit_scores(self, kin_type, scores, suppress_messages=False):
         """
         Submitting scores for the foreground/background substrates.
@@ -61,10 +61,10 @@ class RankedPhosData(object):
         -------
         None.
         """
-        
+
         self.dp_data_pps.submit_scores(kin_type=kin_type, scores=scores, suppress_messages=suppress_messages)
-        
-        
+
+
     def submit_percentiles(self, kin_type, percentiles, phosprot_name=None, suppress_messages=False):
         """
         Submitting percentiles for the foreground/background substrates.
@@ -81,34 +81,34 @@ class RankedPhosData(object):
             Name of phosphoproteome database.
         suppress_messages : bool, optional
             Suppress messages. the default is False.
-        
+
         Raises
         ------
         ValueError
             Raise error if data type is not valid.
-            
+
         Returns
         -------
         None.
         """
-        
+
         if phosprot_name is None:
             phosprot_name = _global_vars.phosprot_name
         self.phosprot_name = phosprot_name
-            
+
         self.dp_data_pps.submit_percentiles(kin_type=kin_type, percentiles=percentiles, phosprot_name=phosprot_name, suppress_messages=suppress_messages)
-        
-    
+
+
     def _create_kin_sub_sets(self, thresh, comp_direction):
-        
+
         print('\nGenerating kinase-substrates sets')
         logger.info('Generating kinase-substrates sets')
         kin_sub_sets = enrichment.create_kin_sub_sets(data_values=self.data_kl_values, threshold=thresh, comp_direction=comp_direction)
         self.kin_sub_sets = kin_sub_sets
-        
+
         return(kin_sub_sets)
-    
-    
+
+
     def mea(self, kin_type, kl_method, kl_thresh,
             kinases=None, non_canonical=False,
             rescore=False, weight=1,
@@ -117,7 +117,7 @@ class RankedPhosData(object):
             gseapy_verbose=False):
         """
         Kinase enrichment analysis based on pre-ranked GSEA substrates list.
-    
+
         Parameters
         ----------
         kin_type : str
@@ -133,15 +133,15 @@ class RankedPhosData(object):
         rescore : bool, optional
             If True, Kinase Library scores or percentiles will be recalculated.
         **GSEApy parameters: weight, threads, min_size, max_size, permutation_num, seed, gseapy_verbose
-    
+
         Returns
         -------
         enrichemnt_results : pd.DataFrame
             pd.Dataframe with results of MEA for the specified KL method and threshold.
         """
-        
+
         exceptions.check_kl_method(kl_method)
-        
+
         if getattr(self.dp_data_pps, kin_type+'_data').empty:
             raise ValueError(f'Data does not contain {kin_type} substrates.')
 
@@ -151,7 +151,7 @@ class RankedPhosData(object):
             kinases = [kinases]
         kinases = [x.upper() for x in kinases]
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
-        
+
         data_att = kl_method+'s'
         kl_comp_direction = _global_vars.kl_method_comp_direction_dict[kl_method]
 
@@ -173,13 +173,13 @@ class RankedPhosData(object):
                 print('Not all kinase percentiles were provided. Re-calculating percentiles for data')
                 self.dp_data_pps.percentile(kin_type=kin_type,kinases=kinases)
                 self.phosprot_name = _global_vars.phosprot_name
-        
+
         self.data_kl_values = getattr(self.dp_data_pps, kin_type + '_' + data_att)
-        
+
         kin_sub_sets = self._create_kin_sub_sets(thresh=kl_thresh, comp_direction=kl_comp_direction)
 
         ranked_subs = self.dp_data_pps.data.set_index(_global_vars.default_seq_col)[self.rank_col].sort_values(ascending=False)
-        
+
         prerank_results = gp.prerank(rnk=ranked_subs,
                              gene_sets=kin_sub_sets,
                              weight=weight,
@@ -189,18 +189,18 @@ class RankedPhosData(object):
                              permutation_num=permutation_num,
                              seed=seed,
                              verbose=gseapy_verbose)
-        
+
         res_col_converter = {'Term': 'Kinase', 'ES': 'ES', 'NES': 'NES', 'NOM p-val': 'p-value', 'FDR q-val': 'FDR', 'Tag %': 'Subs fraction', 'Lead_genes': 'Leading substrates'}
 
         enrichment_data = prerank_results.res2d.drop(['Name', 'FWER p-val', 'Gene %'], axis=1).rename(columns=res_col_converter)
         enrichment_data['p-value'] = enrichment_data['p-value'].replace(0,1/permutation_num).astype(float) #Setting p-value of zero to 1/(# of permutations)
         enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
         sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase').reindex(data.get_kinase_list(kin_type, non_canonical=non_canonical))
-        
+
         enrichemnt_results = MeaEnrichmentResults(enrichment_results=sorted_enrichment_data, pps_data=self, gseapy_obj=prerank_results,
                                                    kin_type=kin_type, kl_method=kl_method, kl_thresh=kl_thresh, tested_kins=kinases,
                                                    data_att=data_att, kl_comp_direction=kl_comp_direction)
-        
+
         return enrichemnt_results
 
 #%%
@@ -230,11 +230,11 @@ class MeaEnrichmentResults(object):
     kl_comp_direction : str
         Dictates if kinases above or below the specified threshold are used ('higher','lower').
     """
-    
+
     def __init__(self, enrichment_results, pps_data, gseapy_obj,
                  kin_type, kl_method, kl_thresh, tested_kins,
                  data_att, kl_comp_direction):
-        
+
         self.enrichment_results = enrichment_results
         self.pps_data = pps_data
         self.gseapy_obj = gseapy_obj
@@ -244,11 +244,11 @@ class MeaEnrichmentResults(object):
         self.tested_kins = tested_kins
         self._data_att = data_att
         self._kl_comp_direction = kl_comp_direction
-        
+
         if kl_method in ['percentile','percentile_rank']:
             self.phosprot_name = pps_data.phosprot_name
-        
-        
+
+
     def enriched_subs(self, kinases, data_columns=None, as_dataframe=False,
                       save_to_excel=False, output_dir=None, file_prefix=None):
         """
@@ -268,24 +268,24 @@ class MeaEnrichmentResults(object):
             Location for enriched substrates excel file to be saved.
         file_prefix : str, optional
             Prefix for the files name.
-           
+
         Returns
         -------
         enrich_subs_dict : dict
             Dictionary with the substrates that drove enrichment for each kinase.
         """
-        
+
         if kinases == []:
             print('No kinases provided.')
             return({})
-        
+
         if isinstance(kinases, str):
             kinases = [kinases]
         kinases = [x.upper() for x in kinases]
         if not (set(kinases) <= set(self.tested_kins)):
             missing_kinases = list(set(kinases) - set(self.tested_kins))
             raise ValueError(f'Certain kinases are not in the enrichment results ({missing_kinases}).')
-        
+
         if data_columns is None:
             data_columns = getattr(self.pps_data.dp_data_pps, self.kin_type+'_data').columns.to_list()
 
@@ -294,7 +294,7 @@ class MeaEnrichmentResults(object):
                 raise ValueError('Please provide output directory.')
             output_dir = output_dir.rstrip('/')
             os.makedirs(output_dir, exist_ok=True)
-            
+
             if file_prefix is not None:
                 writer = pd.ExcelWriter(f'{output_dir}/enriched_subs/{file_prefix}_{self.kin_type}_{self._data_att}_thresh_{self.kl_thresh}.xlsx')
             else:
@@ -307,21 +307,21 @@ class MeaEnrichmentResults(object):
                 enriched_kin_subs = score_data[score_data[kin] >= self.kl_thresh][data_columns + [kin]].sort_values(by=kin, ascending=False)
             elif self._kl_comp_direction == 'lower':
                 enriched_kin_subs = score_data[score_data[kin] <= self.kl_thresh][data_columns + [kin]].sort_values(by=kin, ascending=True)
-            
+
             enrich_subs_dict[kin] = enriched_kin_subs
-            
+
             if save_to_excel:
                 enriched_kin_subs.to_excel(writer, sheet_name=kin, index=False)
 
         if save_to_excel:
             writer.close()
-        
+
         if len(kinases)==1 and as_dataframe:
             return(enriched_kin_subs)
-        
+
         return(enrich_subs_dict)
-    
-    
+
+
     def activated_kins(self, sig_es=0, sig_pval=0.1, adj_pval=True, norm_es=True):
         """
         Returns a list of all kinases with significant p-value/FDR and ES/NES above threshold.
@@ -336,32 +336,32 @@ class MeaEnrichmentResults(object):
             If True use adjusted p-value for calculation of statistical significance. The default is True.
         norm_es : bool, optional
             If True use NES for calculation of statistical significance. The default is True.
-           
+
         Returns
         -------
         activated_kins : list
             List of kinases enriched with significant p-value/FDR and ES/NES above threshold.
         """
-        
+
         if sig_es<0:
             raise ValueError('sig_es must be zero or positive.')
-        
+
         if adj_pval:
             pval_col = 'FDR'
         else:
             pval_col = 'p-value'
-        
+
         if norm_es:
             es_col = 'NES'
         else:
             es_col = 'ES'
-        
-        activated_kins = list(self.enrichment_results[(st_kin_enrich.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results[es_col] >= sig_es)].index)
-        
+
+        activated_kins = list(self.enrichment_results[(self.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results[es_col] >= sig_es)].index)
+
         return activated_kins
-    
-    
-    def inhibited_kins(self, sig_es=0, sig_pval=0.1, adj_pval=True):
+
+
+    def inhibited_kins(self, sig_es=0, sig_pval=0.1, adj_pval=True, norm_es=True):
         """
         Returns a list of all kinases with significant p-value/FDR and ES/NES below negative threshold.
 
@@ -375,31 +375,31 @@ class MeaEnrichmentResults(object):
             If True use adjusted p-value for calculation of statistical significance. The default is True.
         norm_es : bool, optional
             If True use NES for calculation of statistical significance. The default is True.
-           
+
         Returns
         -------
         inhibited_kins : list
             List of kinases enriched with significant p-value/FDR and ES/NES below negative threshold.
         """
-        
+
         if sig_es<0:
             raise ValueError('sig_es must be zero or positive (for inhibited kinases: -sig_es will be used).')
-            
+
         if adj_pval:
             pval_col = 'FDR'
         else:
             pval_col = 'p-value'
-        
+
         if norm_es:
             es_col = 'NES'
         else:
             es_col = 'ES'
-        
-        inhibited_kins = list(self.enrichment_results[(st_kin_enrich.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results[es_col] >= -sig_es)].index)
-        
+
+        inhibited_kins = list(self.enrichment_results[(self.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results[es_col] <= -sig_es)].index)
+
         return inhibited_kins
-        
-        
+
+
     def plot_volcano(self, sig_es=0, sig_pval=0.1, adj_pval=True, kinases=None,
                      es_col='NES', pval_col=None, highlight_kins=None,
                      kins_label_dict=None, label_kins=None, adjust_labels=True, labels_fontsize=7,
@@ -472,10 +472,10 @@ class MeaEnrichmentResults(object):
                 pval_col='FDR'
             else:
                 pval_col='p-value'
-        
+
         if ylabel is None:
             ylabel='-log$_{10}$('+pval_col+')'
-        
+
         if kinases is None:
             kinases = self.tested_kins
 
