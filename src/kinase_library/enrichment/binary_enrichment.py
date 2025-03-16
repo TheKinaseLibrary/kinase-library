@@ -53,26 +53,26 @@ class EnrichmentData(object):
                  drop_invalid_subs=True,
                  new_seq_phos_res_cols=True,
                  suppress_warnings=False):
-        
+
         if background is None:
             background = data.get_phosphoproteome()
-        
+
         if isinstance(foreground, (pd.Series, list)):
             foreground = utils.list_series_to_df(foreground, col_name=fg_seq_col)
         if isinstance(background, (pd.Series, list)):
             background = utils.list_series_to_df(background, col_name=bg_seq_col)
-        
+
         if fg_seq_col is None:
             fg_seq_col = _global_vars.default_seq_col
         if bg_seq_col is None:
             bg_seq_col = _global_vars.default_seq_col
-        
+
         self.fg_data = foreground
         self.bg_data = background
         self.fg_pps = pps.PhosphoProteomics(foreground, seq_col=fg_seq_col, pad=fg_pad, pp=fg_pp, drop_invalid_subs=drop_invalid_subs, new_seq_phos_res_cols=new_seq_phos_res_cols, suppress_warnings=suppress_warnings)
         self.bg_pps = pps.PhosphoProteomics(background, seq_col=bg_seq_col, pad=bg_pad, pp=bg_pp, drop_invalid_subs=drop_invalid_subs, new_seq_phos_res_cols=new_seq_phos_res_cols, suppress_warnings=suppress_warnings)
-        
-    
+
+
     @staticmethod
     def _get_kinase_freq(scored_data, threshold, direction):
         """
@@ -91,15 +91,15 @@ class EnrichmentData(object):
         -------
         Prediction frequency of every kinase in data.
         """
-        
+
         if direction == 'higher':
             return((scored_data>=threshold).sum())
         elif direction == 'lower':
             return((scored_data<=threshold).sum())
         else:
             raise ValueError('\'direction\' must be either \'higher\' or \'lower\'')
-    
-    
+
+
     @staticmethod
     def _correct_contingency_table(cont_table, columns=None):
         """
@@ -119,7 +119,7 @@ class EnrichmentData(object):
         corrected_cont_table : pd.DataFrame
             Corrected dataframe.
         """
-        
+
         if columns is not None:
             if len(columns) != 4:
                 print('Exactly 4 columns must be provided.')
@@ -127,15 +127,15 @@ class EnrichmentData(object):
             if cont_table.shape[1] != 4:
                 print('Dataframe must have 4 columns (or 4 columns must be provided).')
             columns = cont_table.columns
-        
+
         corrected_cont_table = cont_table[columns].astype(float)
         pd.options.mode.chained_assignment = None # Turning off pandas SettingWithCopyWarning
         corrected_cont_table[corrected_cont_table.min(axis=1) == 0] = corrected_cont_table[corrected_cont_table.min(axis=1) == 0] + 0.5 # Applying Haldane correction (adding 0.5 to the cases with zero in one of the counts) - being used only for calculating log2(freq_factor), not for p-value
         pd.options.mode.chained_assignment = 'warn' # Turning on pandas SettingWithCopyWarning
-        
+
         return(corrected_cont_table)
-    
-    
+
+
     def submit_scores(self, kin_type, scores, data_type=['foreground','background'], suppress_messages=False):
         """
         Submitting scores for the foreground/background substrates.
@@ -162,19 +162,19 @@ class EnrichmentData(object):
         -------
         None.
         """
-        
+
         if isinstance(data_type, str):
             data_type = [data_type]
-        
+
         for dt in data_type:
             exceptions.check_enrichment_data_type(dt)
-            
+
             if dt in ['foreground','fg']:
                 self.fg_pps.submit_scores(kin_type=kin_type, scores=scores, suppress_messages=suppress_messages)
             elif dt in ['background','bg']:
                 self.bg_pps.submit_scores(kin_type=kin_type, scores=scores, suppress_messages=suppress_messages)
-        
-        
+
+
     def submit_percentiles(self, kin_type, percentiles, data_type=['foreground','background'], phosprot_name=None, suppress_messages=False):
         """
         Submitting percentiles for the foreground/background substrates.
@@ -193,39 +193,39 @@ class EnrichmentData(object):
             Name of phosphoproteome database.
         suppress_messages : bool, optional
             Suppress messages. the default is False.
-        
+
         Raises
         ------
         ValueError
             Raise error if data type is not valid.
-            
+
         Returns
         -------
         None.
         """
-        
+
         if isinstance(data_type, str):
             data_type = [data_type]
-        
+
         if phosprot_name is None:
             phosprot_name = _global_vars.phosprot_name
         self.phosprot_name = phosprot_name
-            
+
         for dt in data_type:
             exceptions.check_enrichment_data_type(dt)
-            
+
             if dt in ['foreground','fg']:
                 self.fg_pps.submit_percentiles(kin_type=kin_type, percentiles=percentiles, phosprot_name=phosprot_name, suppress_messages=suppress_messages)
             elif dt in ['background','bg']:
                 self.bg_pps.submit_percentiles(kin_type=kin_type, percentiles=percentiles, phosprot_name=phosprot_name, suppress_messages=suppress_messages)
-        
-        
+
+
     def kinase_enrichment(self, kin_type, kl_method, kl_thresh,
                           kinases=None, non_canonical=False,
                           enrichment_type='enriched', rescore=False):
         """
         Kinase enrichment analysis based on Fisher's exact test for foreground and background substarte lists.
-    
+
         Parameters
         ----------
         kin_type : str
@@ -242,29 +242,29 @@ class EnrichmentData(object):
             Direction of fisher's exact test for kinase enrichment ('enriched','depleted', or 'both').
         rescore : bool, optional
             If True, Kinase Library scores or percentiles will be recalculated.
-    
+
         Returns
         -------
         enrichemnt_results : pd.DataFrame
             pd.Dataframe with results of Kinase Enrichment for the specified KL method and threshold.
         """
-        
+
         exceptions.check_kl_method(kl_method)
         exceptions.check_enrichment_type(enrichment_type)
-        
+
         enrich_test_sides_dict = {'enriched': 'greater', 'depleted': 'less', 'both': 'two-sided'}
         test_alternative = enrich_test_sides_dict[enrichment_type]
-        
+
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
         elif isinstance(kinases, str):
             kinases = [kinases]
         kinases = [x.upper() for x in kinases]
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
-        
+
         data_att = kl_method+'s'
         kl_comp_direction = _global_vars.kl_method_comp_direction_dict[kl_method]
-        
+
         if kl_method in ['score','score_rank']:
             if not hasattr(self.fg_pps, kin_type + '_' + data_att) or rescore:
                 self.fg_pps.score(kin_type=kin_type,kinases=kinases)
@@ -293,10 +293,10 @@ class EnrichmentData(object):
                 print('Not all kinase percentiles were provided. Re-calculating percentiles for background data')
                 self.bg_pps.percentile(kin_type=kin_type,kinases=kinases)
                 self.phosprot_name = _global_vars.phosprot_name
-        
+
         fg_score_data = getattr(self.fg_pps, kin_type + '_' + data_att)
         bg_score_data = getattr(self.bg_pps, kin_type + '_' + data_att)
-        
+
         enrichment_data = pd.DataFrame(index = kinases, columns = ['fg_counts', 'fg_total',
                                                                    'bg_counts', 'bg_total',
                                                                    'fg_percent', 'log2_freq_factor',
@@ -305,18 +305,18 @@ class EnrichmentData(object):
         enrichment_data['bg_total'] = bg_total = len(bg_score_data)
         enrichment_data['fg_counts'] = self._get_kinase_freq(fg_score_data, kl_thresh, kl_comp_direction)
         enrichment_data['bg_counts'] = self._get_kinase_freq(bg_score_data, kl_thresh, kl_comp_direction)
-        
+
         enrichment_data['fg_percent'] = (enrichment_data['fg_counts']/enrichment_data['fg_total']*100).fillna(0)
-        
+
         enrichment_contingency_table = pd.DataFrame({'fg_pos': enrichment_data['fg_counts'],
                                                      'fg_neg': enrichment_data['fg_total'] - enrichment_data['fg_counts'],
                                                      'bg_pos': enrichment_data['bg_counts'],
                                                      'bg_neg': enrichment_data['bg_total'] - enrichment_data['bg_counts']})
 
         corrected_enrichment_contingency_table = self._correct_contingency_table(enrichment_contingency_table)
-        
+
         enrichment_data['log2_freq_factor'] = np.log2((corrected_enrichment_contingency_table['fg_pos'] / (corrected_enrichment_contingency_table['fg_pos'] + corrected_enrichment_contingency_table['fg_neg'])) / (corrected_enrichment_contingency_table['bg_pos'] / (corrected_enrichment_contingency_table['bg_pos'] + corrected_enrichment_contingency_table['bg_neg'])))
-    
+
         fisher_pvals = []
         for fg_counts,bg_counts in zip(enrichment_data['fg_counts'],enrichment_data['bg_counts']):
             fisher_pvals.append(st.fisher_exact([[fg_counts, fg_total - fg_counts], [bg_counts, bg_total - bg_counts]],
@@ -327,7 +327,7 @@ class EnrichmentData(object):
         enrichemnt_results = EnrichmentResults(enrichment_results=enrichment_data, pps_data=self, kin_type=kin_type,
                                                kl_method=kl_method, kl_thresh=kl_thresh, enrichment_type=enrichment_type,
                                                tested_kins=kinases, data_att=data_att, kl_comp_direction=kl_comp_direction)
-        
+
         return enrichemnt_results
 
 #%%
@@ -357,11 +357,11 @@ class EnrichmentResults(object):
     kl_comp_direction : str
         Dictates if kinases above or below the specified threshold are used ('higher','lower').
     """
-    
+
     def __init__(self, enrichment_results, pps_data,
                  kin_type, kl_method, kl_thresh, enrichment_type,
                  tested_kins, data_att, kl_comp_direction):
-        
+
         self.enrichment_results = enrichment_results
         self.pps_data = pps_data
         self.kin_type = kin_type
@@ -371,11 +371,11 @@ class EnrichmentResults(object):
         self.tested_kins = tested_kins
         self._data_att = data_att
         self._kl_comp_direction = kl_comp_direction
-        
+
         if kl_method in ['percentile','percentile_rank']:
             self.phosprot_name = pps_data.phosprot_name
-        
-        
+
+
     def enriched_subs(self, kinases, data_columns=None, as_dataframe=False,
                       save_to_excel=False, output_dir=None, file_prefix=None):
         """
@@ -395,24 +395,24 @@ class EnrichmentResults(object):
             Location for enriched substrates excel file to be saved.
         file_prefix : str, optional
             Prefix for the files name.
-           
+
         Returns
         -------
         enrich_subs_dict : dict
             Dictionary with the substrates that drove enrichment for each kinase.
         """
-        
+
         if kinases == []:
             print('No kinases provided.')
             return({})
-        
+
         if isinstance(kinases, str):
             kinases = [kinases]
         kinases = [x.upper() for x in kinases]
         if not (set(kinases) <= set(self.tested_kins)):
             missing_kinases = list(set(kinases) - set(self.tested_kins))
             raise ValueError(f'Certain kinases are not in the enrichment results ({missing_kinases}).')
-        
+
         if data_columns is None:
             data_columns = getattr(self.pps_data.fg_pps, self.kin_type+'_data').columns.to_list()
 
@@ -421,7 +421,7 @@ class EnrichmentResults(object):
                 raise ValueError('Please provide output directory.')
             output_dir = output_dir.rstrip('/')
             os.makedirs(output_dir, exist_ok=True)
-            
+
             if file_prefix is not None:
                 writer = pd.ExcelWriter(f'{output_dir}/{file_prefix}_{self.kin_type}_{self._data_att}_thresh_{self.kl_thresh}.xlsx')
             else:
@@ -434,21 +434,21 @@ class EnrichmentResults(object):
                 enriched_kin_subs = score_data[score_data[kin] >= self.kl_thresh][data_columns + [kin]].sort_values(by=kin, ascending=False)
             elif self._kl_comp_direction == 'lower':
                 enriched_kin_subs = score_data[score_data[kin] <= self.kl_thresh][data_columns + [kin]].sort_values(by=kin, ascending=True)
-            
+
             enrich_subs_dict[kin] = enriched_kin_subs
-            
+
             if save_to_excel:
                 enriched_kin_subs.to_excel(writer, sheet_name=kin, index=False)
 
         if save_to_excel:
             writer.close()
-        
+
         if len(kinases)==1 and as_dataframe:
             return(enriched_kin_subs)
-        
+
         return(enrich_subs_dict)
-    
-    
+
+
     def enriched_kins(self, sig_lff=0, sig_pval=0.1, adj_pval=True):
         """
         Returns a list of all kinases enriched above a p-value and frequency-factor thresholds.
@@ -461,22 +461,22 @@ class EnrichmentResults(object):
             Threshold to determine the p-value significance of kinase enrichment. The default is 0.1 (adjusted p-values).
         adj_pval : bool, optional
             If True use adjusted p-value for calculation of statistical significance. The default is True.
-           
+
         Returns
         -------
         enriched_kins : pd.DataFrame
             List of kinases enriched according to the designated p-value and freq_facor thresholds.
         """
-        
+
         if adj_pval:
             pval_col = 'fisher_adj_pval'
         else:
             pval_col = 'fisher_pval'
-                
+
         enriched_kins = list(self.enrichment_results[(self.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results['log2_freq_factor'] >= sig_lff)].index)
         return enriched_kins
-    
-    
+
+
     def depleted_kins(self, sig_lff=0, sig_pval=0.1, adj_pval=True):
         """
         Returns a list of all kinases depleted above a p-value and frequency-factor thresholds.
@@ -489,22 +489,22 @@ class EnrichmentResults(object):
             Threshold to determine the p-value significance of kinase enrichment. The default is 0.1 (adjusted p-values).
         adj_pval : bool, optional
             If True use adjusted p-value for calculation of statistical significance. The default is True.
-           
+
         Returns
         -------
         depleted_kins : pd.DataFrame
             List of kinases depleted according to the designated p-value and freq_facor thresholds.
         """
-        
+
         if adj_pval:
             pval_col = 'fisher_adj_pval'
         else:
             pval_col = 'fisher_pval'
-                
+
         depleted_kins = list(self.enrichment_results[(self.enrichment_results[pval_col] <= sig_pval) & (self.enrichment_results['log2_freq_factor'] <= -sig_lff)].index)
         return depleted_kins
-        
-        
+
+
     def plot_volcano(self, sig_lff=0, sig_pval=0.1, fg_percent_thresh=0, fg_percent_col='fg_percent', kinases=None,
                      lff_col='log2_freq_factor', adj_pval=True, highlight_kins=None, ignore_depleted=False,
                      kins_label_dict=None, label_kins=None, adjust_labels=True, labels_fontsize=7,
@@ -579,7 +579,7 @@ class EnrichmentResults(object):
             fg_size = len(getattr(self.pps_data.fg_pps, self.kin_type+'_'+self.kl_method+'s'))
             bg_size = len(getattr(self.pps_data.bg_pps, self.kin_type+'_'+self.kl_method+'s'))
             title = '\n'.join(filter(None, [title,f'Foreground: {fg_size}; Background: {bg_size}']))
-        
+
         if adj_pval:
             pval_col = 'fisher_adj_pval'
             if ylabel is None:
@@ -588,7 +588,7 @@ class EnrichmentResults(object):
             pval_col = 'fisher_pval'
             if ylabel is None:
                 ylabel = '-log$_{10}$(Nominal p-value)'
-        
+
         fg_percent_kins = self.enrichment_results[self.enrichment_results[fg_percent_col] >= fg_percent_thresh].index.to_list()
         if kinases is not None:
             kinases = [x for x in kinases if x in fg_percent_kins]
