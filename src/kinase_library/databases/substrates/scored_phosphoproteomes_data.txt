@@ -1,2 +1,2 @@
 Date added (yyyy-mm-dd)	Date updated (yyyy-mm-dd)	Name	Description	Ser-Thr sites	Tyr sites
-2024-11-03	2025-01-28	ochoa	Ochoa et al. 2019 - https://doi.org/10.1038/s41587-019-0344-3 (Table S2)	82735	5431
+2024-11-03	2025-04-15	ochoa	Ochoa et al. 2019 - https://doi.org/10.1038/s41587-019-0344-3 (Table S2)	82735	5431
