@@ -1,19 +1,25 @@
 # Changelog
 
-## Unreleased
+## [1.1.1] - 2025-04-15
+
+Added
+
+- Matrices (serine/threonine): CDK15
 
 Changed
 
+- Matrices (serine/threonine): HUNK
 - Replaced certain kinase "protein" names with more familiar and recognizable names for researchers:
-  - p90RSK → RSK1  
-  - p70S6K1 → S6K1  
-  - p70S6K2 → S6K2  
-  - PRKD1 → PKD1  
-  - PRKD2 → PKD2  
-  - PRKD3 → PKD3  
-  - CRIK → CITRON  
-  - MEKK6 → ASK2  
+  - p90RSK → RSK1
+  - p70S6K1 → S6K1
+  - p70S6K2 → S6K2
+  - PRKD1 → PKD1
+  - PRKD2 → PKD2
+  - PRKD3 → PKD3
+  - CRIK → CITRON
+  - MEKK6 → ASK2
   - MAP3K15 → ASK3
+- Upgraded dependcies
 
 ## [1.1.1] - 2025-03-16
 
