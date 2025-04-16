@@ -79,9 +79,9 @@ class Substrate(object):
         y   0   0   0   0   0   0   0   0   0
 
     """
-    
+
     def __init__(self, seq, kin_type=None, pp=False, phos_pos=None, aa=None, pos=None, validate_phos_res=True, validate_aa=True):
-        
+
         sub = utils.sequence_to_substrate(seq=seq, pp=pp, phos_pos=phos_pos, kin_type=kin_type, validate_phos_res=validate_phos_res, validate_aa=validate_aa)
 
         if kin_type is None:
@@ -90,7 +90,7 @@ class Substrate(object):
             aa = data.get_aa()
         if pos is None:
             pos = data.get_positions(kin_type)
-            
+
         self.sequence = seq
         self.length = len(seq)
         self.substrate = sub
@@ -100,8 +100,8 @@ class Substrate(object):
         self.sub_bin_matrix = utils.sub_binary_matrix(sub, pp=pp, aa=aa, pos=pos)
         self._aa = aa
         self._pos = pos
-    
-    
+
+
     def score(self, kinases=None, pp=None,
               st_fav=True, log2_score=True,
               non_canonical=False,
@@ -109,7 +109,7 @@ class Substrate(object):
               round_digits=4):
         """
         Calculate score of the substrate for the given kinases.
-        
+
         Score is being computed in a vectorized way:
             1. Making binary matrix for the substrates.
             2. Converting kinase matrix (norm-scaled) to log2
@@ -146,23 +146,23 @@ class Substrate(object):
         score_output : pd.Series, list, or dictionary
             Scores of the substrate for the specified kinases.
         """
-        
+
         current_dir = os.path.dirname(__file__)
         mat_dir = os.path.join(current_dir, _global_vars.mat_dir)
-        
+
         kin_type = self.kin_type
-        
+
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
         elif isinstance(kinases, str):
             kinases = [kinases]
-        
+
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
         exceptions.check_score_output_type(output_type)
         exceptions.check_output_sort_by(sort_by)
-        
+
         kinases = [x.upper() for x in kinases]
-        
+
         if pp is None:
             pp = self.pp
             sub_mat = self.sub_bin_matrix
@@ -170,10 +170,10 @@ class Substrate(object):
             sub_mat = self.sub_bin_matrix
         elif not pp:
             sub_mat = utils.sub_binary_matrix(self.substrate, pp=False, aa=self._aa, pos=self._pos)
-        
+
         # Using table with all the matrices concatenated (log2)
         kin_mat_log2 = data.get_multiple_matrices(kinases, kin_type=kin_type, mat_type='log2')
-        
+
         sub_vector = utils.flatten_matrix(sub_mat)
 
         # matrices are in log2 space
@@ -183,27 +183,27 @@ class Substrate(object):
             st_fav_scores_log2 = np.log2(st_fav_scores)
             score_log2 = score_log2 + st_fav_scores_log2
         score = np.power(2,score_log2)
-        
+
         if log2_score:
             score_output = score_log2.round(round_digits)
         else:
             score_output = score.round(round_digits)
-        
+
         if sort_by == 'name':
             score_output = score_output.sort_index()
         elif sort_by == 'value':
             score_output = score_output.sort_values(ascending=False)
         elif sort_by == 'input':
             score_output = score_output.loc[kinases]
-        
+
         if output_type == 'list':
             score_output = list(score_output)
         elif output_type == 'dict':
             score_output = score_output.to_dict()
-        
+
         return(score_output)
-    
-    
+
+
     def percentile(self, kinases=None,
                    customized_scored_phosprot=None,
                    pp=None, st_fav=True, non_canonical=False,
@@ -212,7 +212,7 @@ class Substrate(object):
                    round_digits=2):
         """
         Calculate the percentile score of the substrate for the given kinases.
-        
+
         After score is being computed, the percentile of that score is being
         computed based on a basal scored phosphoproteome.
 
@@ -249,23 +249,23 @@ class Substrate(object):
         percent_output : pd.Series, list, or dictionary
             Percentiles of the substrate for the specified kinases.
         """
-        
+
         kin_type = self.kin_type
-        
+
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
         elif isinstance(kinases, str):
             kinases = [kinases]
-        
+
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
         exceptions.check_score_output_type(output_type)
         exceptions.check_output_sort_by(sort_by)
-        
+
         kinases = [x.upper() for x in kinases]
-        
+
         if pp is None:
             pp = self.pp
-        
+
         if customized_scored_phosprot is None:
             all_scored_phosprot = _global_vars.all_scored_phosprot
 
@@ -273,28 +273,28 @@ class Substrate(object):
             scored_phosprot = all_scored_phosprot.ser_thr_scores
         else:
             scored_phosprot = all_scored_phosprot.tyrosine_scores
-            
+
         percent_output = []
-        
+
         score = self.score(kinases=kinases, pp=pp, st_fav=st_fav)
-        
+
         percent_output = round((scored_phosprot[score.index] <= score).sum() / len(scored_phosprot) * 100, round_digits)
-        
+
         if sort_by == 'name':
             percent_output = percent_output.sort_index()
         elif sort_by == 'value':
             percent_output = percent_output.sort_values(ascending=False)
         elif sort_by == 'input':
             percent_output = percent_output.loc[kinases]
-            
+
         if output_type == 'list':
             percent_output = list(percent_output)
         elif output_type == 'dict':
             percent_output = percent_output.to_dict()
-        
+
         return(percent_output)
-    
-    
+
+
     def rank(self, kinases=None, method='percentile',
              pp=None, st_fav=True, non_canonical=False,
              output_type='series', sort_by='value',
@@ -318,7 +318,7 @@ class Substrate(object):
         non_canonical : bool, optional
             Return also non-canonical kinases. For tyrosine kinases only. The default is False.
         output_type : str, optional
-            Format for function output; 'list', 'dict', or 'series' (default). 
+            Format for function output; 'list', 'dict', or 'series' (default).
         sort_by : str, optional
             Sorting method for output. The default is 'value'.
             'input': keep the order of input kinases.
@@ -340,43 +340,43 @@ class Substrate(object):
         """
 
         kin_type = self.kin_type
-        
+
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
         elif isinstance(kinases, str):
             kinases = [kinases]
-        
+
         if method not in ['score','percentile']:
             raise ValueError('\'mothod\' must be either \'score\' or \'percentile\'.')
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
         exceptions.check_score_output_type(output_type)
         exceptions.check_output_sort_by(sort_by)
-        
+
         kinases = [x.upper() for x in kinases]
-        
+
         if method == 'score':
             score_values = self.score(pp=pp, st_fav=st_fav, non_canonical=non_canonical, round_digits=score_round_digits)
         else:
             score_values = self.percentile(customized_scored_phosprot=customized_scored_phosprot, pp=pp, st_fav=st_fav, non_canonical=non_canonical, phosprot_path=phosprot_path, round_digits=percentile_round_digits)
 
         rank_output = score_values.rank(method='min', ascending=False).astype(int).loc[kinases]
-        
-        
+
+
         if sort_by == 'name':
             rank_output = rank_output.sort_index()
         elif sort_by == 'value':
             rank_output = rank_output.sort_values(ascending=True)
         elif sort_by == 'input':
             rank_output = rank_output.loc[kinases]
-        
+
         if output_type == 'list':
             rank_output = list(rank_output)
         elif output_type == 'dict':
             rank_output = rank_output.to_dict()
-            
+
         return(rank_output)
-    
-    
+
+
     def predict(self, kinases=None,
                 pp=None, st_fav=True, non_canonical=False,
                 customized_scored_phosprot=None,
@@ -385,7 +385,7 @@ class Substrate(object):
                 sort_by='percentile',
                 score_round_digits=4, percentile_round_digits=2):
         """
-        Generates a dataframe of scores, percentiles, and ranks (optional) for the given list of kinases. 
+        Generates a dataframe of scores, percentiles, and ranks (optional) for the given list of kinases.
 
         Parameters
         ----------
@@ -420,17 +420,17 @@ class Substrate(object):
         prediction_output : pd.DataFrame
             Dataframe containing kinases as the index and scoring metrics as the columns.
         """
-        
+
         kin_type = self.kin_type
-        
+
         if kinases is None:
             kinases = data.get_kinase_list(kin_type, non_canonical=non_canonical)
         elif isinstance(kinases, str):
             kinases = [kinases]
-        
+
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
         exceptions.check_output_sort_by(sort_by)
-        
+
         kinases = [x.upper() for x in kinases]
 
         score = self.score(kinases=kinases, log2_score=log2_score, pp=pp, st_fav=st_fav, non_canonical=non_canonical, round_digits=score_round_digits)
@@ -442,7 +442,7 @@ class Substrate(object):
                                        score_rank.rename('Score Rank'),
                                        percentile.rename('Percentile'),
                                        percentile_rank.rename('Percentile Rank')], axis=1)
-        
+
         if sort_by == 'name':
             prediction_output = prediction_output.sort_index()
         elif sort_by == 'score':
@@ -451,10 +451,10 @@ class Substrate(object):
             prediction_output = prediction_output.sort_values(by='Percentile', ascending=False)
         elif sort_by == 'input':
             prediction_output = prediction_output.loc[kinases]
-        
+
         return(prediction_output)
-    
-    
+
+
     def un_primed(self):
         """
         Returning un-primed substrate.
@@ -464,7 +464,7 @@ class Substrate(object):
         un_primed_sub : str
             15-mer with no phosphorylated residues.
         """
-        
+
         un_primed_sub = utils.unprime_substrate(self.substrate)
         return(un_primed_sub)
 
@@ -572,11 +572,11 @@ class Kinase(object):
         HGNC_ID                                                          HGNC:11305
         Name: SRPK1, dtype: object
         """
-    
+
     def __init__(self, name, matrix, random_aa_value, mat_type='log2',
                  kin_type=None, family=None, pp=True, k_mod=False,
                  phos_acc_fav=None, cols=None, rows=None):
-        
+
         input_type = type(matrix)
         if input_type == np.ndarray:
             if rows is None or cols is None:
@@ -584,15 +584,15 @@ class Kinase(object):
             df_mat = utils.matrix_to_df(mat=matrix, kin_type=kin_type, pp=pp, k_mod=k_mod, mat_type=mat_type, cols=cols, rows=rows)
         else:
             df_mat = matrix.copy()
-        
+
         # if df_mat.min().min() <= 0:
         #     raise Exception('Matrix cannot contain zero or negative values.')
-        
+
         try:
             info = data.get_kinase_info(name, kin_type=kin_type)
         except:
             info = 'N/A'
-        
+
         if mat_type == 'log2':
             lin_mat = np.power(2,df_mat)*random_aa_value
             log2_mat = df_mat.copy()
@@ -604,7 +604,7 @@ class Kinase(object):
             log2_mat = df_mat.copy()
         else:
             raise ValueError('\'mat_type\' must be one of the followings: \'densitometry\', \'raw\', \'norm\', \'log2\', or \'customized\'.')
-        
+
         self.name = name
         self.matrix = df_mat
         self.random_aa_value = random_aa_value
@@ -619,15 +619,15 @@ class Kinase(object):
         self.k_mod = k_mod
         self.phos_acc_fav = phos_acc_fav
         self.info = info
-        
+
         if kin_type == 'ser_thr':
             self.st_fav = self.phos_acc_fav
-        
-    
+
+
     def _get_matrix(self, kinase, kin_type=None, mat_type='log2', aa=None, pos=None, transpose=False):
         """
         Read kinase matrix from file as pd.DataFrame.
-    
+
         Parameters
         ----------
         kinase : str
@@ -642,52 +642,52 @@ class Kinase(object):
             Positions to select. The default is None.
         transpose : bool, optional
             If True, return transposed matrix. The default is False.
-    
+
         Returns
         -------
         kin_matrix : pd.DataFrame
             Kinase matrix as dataframe.
         """
-        
+
         current_dir = os.path.dirname(__file__)
         mat_dir = os.path.join(current_dir, _global_vars.mat_dir)
-        
+
         exceptions.check_kin_name(kinase)
         if kin_type is None:
             kin_type = data.get_kinase_type(kinase)
         else:
             exceptions.check_kin_type(kin_type)
         exceptions.check_mat_type(mat_type)
-        
+
         kinase = kinase.upper()
-        
+
         if pos is None:
             pos = data.get_positions(kin_type)
         if aa is None:
             aa = data.get_aa()
-        
+
         kin_list = [name.split('.')[0] for name in os.listdir(mat_dir + '/' + kin_type + '/' + mat_type + '/') if (name.startswith(".") == False)]
         kin_list.sort()
-    
+
         exceptions.check_kin_name(kinase, kin_list)
-        
+
         full_matrix = pd.read_csv(mat_dir + '/' + kin_type + '/' + mat_type + '/' + kinase + '.tsv', sep = '\t', index_col = 0)
         kin_matrix = full_matrix.loc[pos, aa]
-        
+
         # Matrices are saved with amino acids as columns and positions as rows
         # However default presentation is amino acids as rows and positions as columns
         if not transpose:
             kin_matrix = kin_matrix.transpose()
-        
+
         return(kin_matrix)
-    
-    
+
+
     def _plot_st_fav(self, title='S/T Favorability', ax=None, labels_loc = 'bottom', value_annot=True,
                      bar_color='red', x_text=None, y_text=None, ha_text='center', va_text='top',
                      xticks_fontsize=8, annot_fontsize=10, title_fontsize=10):
         """
         Private function to plot the kinase's s/t favorability.
-    
+
         Parameters
         ----------
         title : str, optional
@@ -714,7 +714,7 @@ class Kinase(object):
             Font size for the favorability text annotation. The default is 10.
         title_fontsize : int, optional
             Font size for the plot title. The default is 10.
-    
+
         Returns
         -------
         None
@@ -725,7 +725,7 @@ class Kinase(object):
         if ax is None:
             w,h = plt.figaspect(1/5)
             fig,ax = plt.subplots(figsize=(w,h))
-        
+
         st_fav_ratio = np.round(self.st_fav['T']/(self.st_fav['S'] + self.st_fav['T']),2)
         st_fav_percent = int(st_fav_ratio*100)
         ax.axvline(st_fav_ratio, c=bar_color, lw=3)
@@ -734,7 +734,7 @@ class Kinase(object):
         ax.tick_params(top=(labels_loc=='top'), labeltop=(labels_loc=='top'),
                        bottom=(labels_loc=='bottom'), labelbottom=(labels_loc=='bottom'),
                        left=False, labelleft=False)
-        
+
         if x_text is None:
             if st_fav_percent>=50:
                 x_text = 0.01
@@ -748,13 +748,13 @@ class Kinase(object):
             ax.text(x_text, y_text, f'S:T = {st_fav_percent}%:{100-st_fav_percent}%',
                     fontsize=annot_fontsize, color='red', weight='bold', ha=ha_text, va=va_text)
         ax.set_title(title, fontsize=title_fontsize, weight = 'bold')
-        
+
         try:
             fig.tight_layout()
         except:
             pass
-    
-    
+
+
     def get_value(self, pos, aa):
         """
         Returns matrix value at certain amino acid and position.
@@ -775,10 +775,10 @@ class Kinase(object):
             raise Exception('Invalid position.')
         if aa not in self.amino_acids:
             raise Exception('Invalid amino acid.')
-        
+
         return(self.matrix.loc[aa,pos])
-    
-    
+
+
     def heatmap(self, zero_pos=True, square=True, title=None,
                 xticks_fontsize=None, yticks_fontsize=None, cmap=None, mat_scale='log',
                 drop_aa=[], drop_pos=[], replace_aa_labels={'s' :'pS', 't' :'pT', 'y':'pY'},
@@ -814,31 +814,31 @@ class Kinase(object):
         fig : plt.Figure
             if 'return_fig' is True, returning plt.Figure of the heatmap.
         """
-        
+
         exceptions.check_mat_scale(mat_scale)
-        
+
         random_aa_value = self.random_aa_value
-        
+
         if title is None:
             title = self.name
         elif title is False:
             title = None
-            
+
         if ax is None:
             fig,ax = plt.subplots()
         else:
             plot = False
             if return_fig:
                 raise ValueError('When Axes provided, \'return_fig\' must be False.')
-        
+
         if label is True:
             label = f'Favorability ({mat_scale}-scale)'
         else:
             label = None
-        
+
         if cmap is None:
             cmap = mcol.LinearSegmentedColormap.from_list("Kinase",['darkblue','blue','white','IndianRed','red'])
-            
+
         if mat_scale == 'log':
             plot_matrix = self.log2_matrix
             vmin = None
@@ -848,9 +848,9 @@ class Kinase(object):
             vmin = 0
             vcenter = random_aa_value
         cnorm = mcol.TwoSlopeNorm(vmin=vmin, vcenter=vcenter)
-        
+
         plot_matrix = plot_matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore').rename(index = replace_aa_labels)
-        
+
         if zero_pos:
             plot_matrix.insert(int((plot_matrix.columns < 0).sum()), 0, random_aa_value)
         sns.heatmap(plot_matrix, cmap=cmap, norm=cnorm, vmin=vmin, xticklabels=True, yticklabels=True, square=square, linewidths=0.25+0.25*(square==False), linecolor='gray', ax=ax, cbar=cbar, cbar_ax=cbar_ax)
@@ -866,9 +866,9 @@ class Kinase(object):
                     lw=0.25+0.25*(square==False)))
         else:
             ax.axvline(int((plot_matrix.columns < 0).sum()), color='black', lw=2+1*(square==False))
-        
+
         ax.add_patch(patches.Rectangle((0, 0), plot_matrix.shape[1], plot_matrix.shape[0], fill=False, edgecolor='black', lw=1))
-        
+
         if xticks_fontsize is None:
             if square:
                 xticks_fontsize = 9
@@ -879,27 +879,27 @@ class Kinase(object):
                 yticks_fontsize = 9
             else:
                 yticks_fontsize = 12
-        
+
         ax.set_xticklabels(labels=[str(x) if x<=0 else '+'+str(x) for x in sorted(plot_matrix.columns)], fontsize=xticks_fontsize)
         ax.set_yticklabels(labels=ax.get_yticklabels(), fontsize=yticks_fontsize)
         ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=True, labelleft=True, rotation=0)
         ax.set_title(title, fontsize=14)
-        
+
         try:
             fig.tight_layout()
         except:
             pass
-        
+
         if not plot:
             try:
                 plt.close(fig)
             except:
                 pass
-        
+
         if return_fig:
             return(fig)
-    
-    
+
+
     def seq_logo(self, logo_type='ratio_to_median', zero_pos=None, zero_pos_format='upper',
                  drop_aa=['s'], drop_pos=[], replace_aa_labels={'t' :'pS/pT', 'y':'pY'},
                  title=None, xlabel='Position', ylabel=None,
@@ -948,10 +948,10 @@ class Kinase(object):
         fig : plt.figure()
             If specified, returning the figure object with the sequence logo.
         """
-        
+
         plot_matrix = self.norm_matrix.drop(drop_aa, errors='ignore').drop(drop_pos, axis=1, errors='ignore')
         plot_matrix = plot_matrix.rename(index = replace_aa_labels)
-        
+
         if zero_pos is None:
             if self.kin_type is None:
                 raise Exception('Either \'kin_type\' or \'zero_pos\' must be specified.')
@@ -959,21 +959,21 @@ class Kinase(object):
                 zero_pos = {'y': 1}
             elif self.kin_type == 'ser_thr':
                 zero_pos = self.st_fav
-            
+
             if zero_pos_format == 'lower':
                 zero_pos = {k.lower():v for k,v in zero_pos.items()}
             elif zero_pos_format == 'upper':
                 zero_pos = {k.upper():v for k,v in zero_pos.items()}
             else:
                 raise Exception('\'zero_pos_format\' must be either \'lower\' or \'upper\'.')
-        
+
         return utils.make_seq_logo(plot_matrix, logo_type=logo_type, zero_pos=zero_pos,
                                    random_aa_value=self.random_aa_value,
                                    title=title, xlabel=xlabel, ylabel=ylabel,
                                    save_fig=save_fig, return_fig=return_fig, plot=plot, ax=ax,
                                    **seq_logo_kwargs)
-    
-    
+
+
     def plot_data(self, seq_logo=True, heatmap=True, st_fav=True, title=None,
                   fig_aspect=1.5, plot=True, save_fig=False, return_fig=False,
                   mat_scale='log', seq_logo_kwargs={}, heatmap_kwargs={}):
@@ -1010,12 +1010,12 @@ class Kinase(object):
         plt.figure
             If return_fig, the kinase figure will be returned.
         """
-        
+
         w,h = plt.figaspect(fig_aspect)
         fig,ax = plt.subplots(3, 2, figsize=(w,h), gridspec_kw={'height_ratios': [0.4, 1, 0.1], 'width_ratios': [1, 0.05]})
         ax[0,1].axis('off')
         ax[2,1].axis('off')
-        
+
         if seq_logo:
             self.seq_logo(ax=ax[0,0], xlabel_size=8, ylabel_size=8, yticks_fontsize=6, xlabel=False, xticks=False, **seq_logo_kwargs)
         else:
@@ -1036,7 +1036,7 @@ class Kinase(object):
                 ax[1,0].add_artist(con2)
         else:
             ax[2,0].axis('off')
-        
+
         if title != False:
             if title is None:
                 title = self.name
@@ -1047,17 +1047,17 @@ class Kinase(object):
             elif st_fav:
                 ax[2,0].set_title(title)
         fig.tight_layout()
-        
+
         if save_fig:
             fig.savefig(save_fig, dpi=1000)
-            
+
         if not plot:
             plt.close(fig)
-                
+
         if return_fig:
             return fig
-    
-    
+
+
     def score(self, subs, pp=False, phos_pos=None, phos_acc_fav=None,
               log2_score=True, output_type = 'series',
               round_digits=2,
@@ -1065,7 +1065,7 @@ class Kinase(object):
               **sub_args):
         """
         Calculate score of the given substrates for the kinase.
-        
+
         Score is being computed in a vectorized way:
             1. Making binary matrix for the substrates.
             2. Converting kinase matrix (norm-scaled) to log2
@@ -1103,18 +1103,18 @@ class Kinase(object):
         score_output : pd.Series, list, or dictionary
             Scores of the specified substrates for the kinase.
         """
-        
+
         exceptions.check_score_output_type(output_type)
-        
+
         if isinstance(subs, str):
             subs = [subs]
         subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa, kin_type=self.kin_type) for s in subs])
         subs_bin_mat = utils.sub_binary_matrix(subs_list, aa=self.amino_acids, pos=self.positions)
 
         kin_mat_log2 = self.log2_matrix
-        
+
         kin_vector = utils.flatten_matrix(kin_mat_log2)
-        
+
         score_log2 = pd.Series(np.dot(subs_bin_mat,kin_vector.transpose()).transpose()[0], index=subs_bin_mat.index, name=self.name).round(round_digits)
         if phos_acc_fav:
             phos_acc_fav =  {k.lower(): v for k, v in phos_acc_fav.items()}
@@ -1125,25 +1125,25 @@ class Kinase(object):
             phos_acc_fav_scores_log2 = np.log2(phos_acc_fav_scores)
             score_log2 = score_log2 + phos_acc_fav_scores_log2
         score = np.power(2,score_log2)
-        
+
         if log2_score:
             score_output = score_log2.round(round_digits)
         else:
             score_output = score.round(round_digits)
-    
+
         if output_type == 'series':
             return(score_output)
         elif output_type == 'dict':
             return(dict(score_output))
-    
-    
+
+
     def percentile(self, subs, pp=False, phos_pos=None, phos_acc_fav=None,
                    output_type='series', customized_scored_phosprot=None,
                    round_digits=2, validate_phos_res=True, validate_aa=True,
                    **sub_args):
         """
         Calculate the percentile score of the given substrate for the kinase.
-        
+
         After score is being computed, the percentile of that score is being
         computed based on a basal scored phosphoproteome.
         Default: PhosphoSitePlus phosphorylation sites data base (07-2021)
@@ -1184,31 +1184,31 @@ class Kinase(object):
         percent_output : pd.Series, list, or dictionary
             Percentiles of the specified substrates for the kinase.
         """
-        
+
         exceptions.check_score_output_type(output_type)
         if self.kin_type not in _global_vars.valid_kin_types:
             raise Exception('In order to calculate percentile, kin_type must be one of the following: {}. Please reload Kianse object.'.format(_global_vars.valid_kin_types))
-        
+
         if isinstance(subs, str):
             subs = [subs]
         subs_list = pd.Series([utils.sequence_to_substrate(s, pp=pp, phos_pos=phos_pos, validate_phos_res=validate_phos_res, validate_aa=validate_aa, kin_type=self.kin_type) for s in subs])
-        
+
         score = self.score(subs=subs_list, pp=pp, phos_pos=phos_pos, phos_acc_fav=phos_acc_fav, log2_score=True, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa, **sub_args)
-        
+
         phosprot = data.get_phosphoproteome(kin_type=self.kin_type)
         phosprot_subs = phosprot[_global_vars.default_seq_col].to_list()
         scored_phosprot = self.score(subs=phosprot_subs, pp=pp, log2_score=True, round_digits=round_digits, validate_phos_res=validate_phos_res, validate_aa=validate_aa)
-        
+
         percent_values = scored_phosprot.sort_values().searchsorted(score, side='right')/len(scored_phosprot)*100
         percent_values = np.round(percent_values, round_digits)
-        
+
         if output_type == 'series':
             percentile_output = pd.Series(percent_values, index=score.index, name=self.name)
         elif output_type == 'dict':
             percentile_output = dict(zip(score.index, percent_values))
-        
+
         return(percentile_output)
-    
+
 
 #%%
 
@@ -1238,7 +1238,7 @@ class ScoredPhosphoProteome(object):
     >>> spp = kl.ScoredPhosphoProteome()
     >>> spp.ser_thr
                            AAK1  ACVR2A  ACVR2B    AKT1  ...   YANK3    YSK1    YSK4     ZAK
-        SITE_+/-7_AA                                     ...                                
+        SITE_+/-7_AA                                     ...
         __MtMDksELVQkAk -3.6796  1.8284  1.9022 -5.8160  ... -0.1768 -7.1092 -2.2866 -3.0714
         NEERNLLsVAykNVV -6.6282 -0.4899 -0.4783  0.4972  ... -0.0312 -0.9182 -0.9721  0.9999
         VVGARRssWRVISsI -6.4300 -1.9120 -2.5666  6.0576  ...  3.0207  1.4549  1.3652 -0.3073
@@ -1251,11 +1251,11 @@ class ScoredPhosphoProteome(object):
         PNssEEDsPIKSDKE -6.8779  1.4739  1.1953 -7.4137  ... -2.0387 -7.3567 -2.3573 -1.9678
         GLPARPksPLDPKKD -4.3794 -5.1915 -5.2657  0.5140  ...  1.0866 -6.2913 -3.9802 -4.7197
     """
-    
+
     def __init__(self, phosprot_name, kin_type=None, phosprot_file=None, phosprot_path='./../databases/substrates',
                  phosprot_data_file=None, phosprot_data_path='./../databases/substrates',
                  log2_values=True, file_type='parquet'):
-        
+
         current_dir = os.path.dirname(__file__)
         phosprot_path = os.path.join(current_dir, phosprot_path)
         phosprot_data_path = os.path.join(current_dir, phosprot_data_path)
@@ -1267,7 +1267,7 @@ class ScoredPhosphoProteome(object):
             kin_type = utils._global_vars.valid_kin_types
         if isinstance(kin_type, str):
             kin_type = [kin_type]
-        
+
         exceptions.check_phosprot_file_type(file_type)
 
         for kt in kin_type:
@@ -1279,13 +1279,13 @@ class ScoredPhosphoProteome(object):
                 setattr(self, kt+'_scores', pd.read_csv(scored_phosprot_file, index_col = 0))
             else:
                 setattr(self, kt+'_scores', pd.read_csv(scored_phosprot_file, sep = '\t', index_col = 0))
-            
+
             if phosprot_data_file is None:
                 scored_phosprot_data_file = phosprot_path + '/' + phosprot_name + '/' + 'phosphoproteome_' + kt + '.txt'
             setattr(self, kt+'_data', pd.read_csv(scored_phosprot_data_file, sep = '\t'))
-        
+
         self.log2_values = log2_values
-    
+
     def merge_data_scores(self, kin_type, data_seq_col=None):
         """
         Merging phosphoproteome data and scores
@@ -1302,17 +1302,17 @@ class ScoredPhosphoProteome(object):
         merged_data : dataframe
             Merged dataframe of the phosphoproteome data and scores.
         """
-        
+
         if data_seq_col is None:
             data_seq_col = _global_vars.default_seq_col
-        
+
         data = getattr(self, kin_type+'_data').set_index(data_seq_col, drop=False)
         scores = getattr(self, kin_type+'_scores')
         try:
             merged_data = pd.concat([data,scores], axis=1)
         except:
             raise Exception('Sequence column in data file is not identical to the index in the scored phosphoproteome file.')
-        
+
         return(merged_data)
 
 
@@ -1415,19 +1415,19 @@ class Kinome(object):
         HGNC_ID                                                          HGNC:11305
         Name: SRPK1, dtype: object
         """
-    
+
     def __init__(self, kin_type=None, family=None):
-        
+
         if kin_type is None:
             kin_type = utils._global_vars.valid_kin_types
         if isinstance(kin_type, str):
             kin_type = [kin_type]
-        
-    
+
+
     def _get_kinome_matrices(self, kin_type, mat_type, excld_kins=[], aa=None, pos=None, as_dict=False):
         """
         Making a data frame with all the matrices of a kinase type except for excluded kinases
-    
+
         Parameters
         ----------
         kin_type : str
@@ -1442,7 +1442,7 @@ class Kinome(object):
             List of specific positions to use.
         as_dict : bool, optional
             If True, return values as dictionary. The default is False.
-    
+
         Returns
         -------
         df_kin_full_mat : dataframe
@@ -1450,44 +1450,43 @@ class Kinome(object):
         kin_mat_dict : dictionary
             if 'as_dict' is True, returns a dictionary of kinases and their matrices.
         """
-        
+
         current_dir = os.path.dirname(__file__)
         mat_dir = os.path.join(current_dir, _global_vars.mat_dir)
-        
+
         exceptions.check_kin_type(kin_type)
         exceptions.check_mat_type(mat_type)
-            
+
         if aa is None:
             aa = ['P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E','s','t','y']
         if pos is None:
             pos = _global_vars.ser_thr_pos*(kin_type == 'ser_thr') + _global_vars.tyrosine_pos*(kin_type == 'tyrosine')
-        
+
         excld_kins = [x.upper() for x in excld_kins]
-        
+
         aa_pos = []
         for p in pos:
             for a in aa:
                 aa_pos.append(str(p) + a)
-        
+
         kin_path = mat_dir + '/' + kin_type + '/' + mat_type
         kin_list = [name.split('.')[0].split('_')[0] for name in os.listdir(kin_path) if (name.startswith(".") == False)]
         kin_list.sort()
-        
+
         wanted_kins = [x for x in kin_list if x not in excld_kins]
-        
+
         kin_full_mat = []
         kin_mat_dict = {}
-        
+
         for kin in tqdm(wanted_kins):
             kin_mat = data.get_matrix(kin, kin_type, aa=aa, pos=pos)
             kin_mat_dict[kin] = kin_mat
             kin_full_mat.append(kin_mat.values.reshape(kin_mat.shape[0]*kin_mat.shape[1],1))
-    
+
         kin_full_mat = np.hstack(kin_full_mat)
         df_kin_full_mat = pd.DataFrame(kin_full_mat, columns = wanted_kins, index = aa_pos).transpose()
-        
+
         if as_dict:
             return(kin_mat_dict)
-        
+
         return(df_kin_full_mat)
-    
