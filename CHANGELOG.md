@@ -19,8 +19,7 @@ Changed
   - CRIK → CITRON
   - MEKK6 → ASK2
   - MAP3K15 → ASK3
-- Upgraded dependcies
-
+- Upgraded dependencies
 ## [1.1.1] - 2025-03-16
 
 Fixed
