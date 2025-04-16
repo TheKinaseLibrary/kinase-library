@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.1] - 2025-04-15
+## [1.2.0] - 2025-04-15
 
 Added
 
@@ -20,6 +20,7 @@ Changed
   - MEKK6 → ASK2
   - MAP3K15 → ASK3
 - Upgraded dependencies
+
 ## [1.1.1] - 2025-03-16
 
 Fixed
