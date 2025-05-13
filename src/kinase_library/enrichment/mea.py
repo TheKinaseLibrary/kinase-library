@@ -197,11 +197,12 @@ class RankedPhosData(object):
         enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
         sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase').reindex(data.get_kinase_list(kin_type, non_canonical=non_canonical))
 
-        enrichemnt_results = MeaEnrichmentResults(enrichment_results=sorted_enrichment_data, pps_data=self, gseapy_obj=prerank_results,
+        enrichemnt_results = MeaEnrichmentResults(enrichment_results=sorted_enrichment_data, pps_data=self, kin_sub_sets=kin_sub_sets, gseapy_obj=prerank_results,
                                                    kin_type=kin_type, kl_method=kl_method, kl_thresh=kl_thresh, tested_kins=kinases,
                                                    data_att=data_att, kl_comp_direction=kl_comp_direction)
 
         return enrichemnt_results
+
 
 #%%
 
@@ -215,6 +216,8 @@ class MeaEnrichmentResults(object):
         Dataframe containing Kinase Library enrichment results.
     pps_data : kl.EnrichmentData
         Object initialized from the foreground and background dataframes used to calculate provided enrichment_results.
+    kin_sub_sets : dict
+        Kinase-substrate sets used for the enrichment.
     kin_type : str
         Kinase type ('ser_thr' or 'tyrosine').
     kl_method : str
@@ -231,12 +234,13 @@ class MeaEnrichmentResults(object):
         Dictates if kinases above or below the specified threshold are used ('higher','lower').
     """
 
-    def __init__(self, enrichment_results, pps_data, gseapy_obj,
-                 kin_type, kl_method, kl_thresh, tested_kins,
-                 data_att, kl_comp_direction):
+    def __init__(self, enrichment_results, pps_data, kin_sub_sets,
+                 gseapy_obj, kin_type, kl_method, kl_thresh,
+                 tested_kins, data_att, kl_comp_direction):
 
         self.enrichment_results = enrichment_results
         self.pps_data = pps_data
+        self.kin_sub_sets = kin_sub_sets
         self.gseapy_obj = gseapy_obj
         self.kin_type = kin_type
         self.kl_method = kl_method
