@@ -204,6 +204,78 @@ class RankedPhosData(object):
         return enrichemnt_results
 
 
+    def mea_custom(self, custom_kin_sets,
+                   kinases=None, kin_type='custom',
+                   weight=1, threads=4, min_size=1, max_size=100000,
+                   permutation_num=1000, seed=112123,
+                   gseapy_verbose=False):
+        """
+        Kinase enrichment analysis based on pre-ranked GSEA substrates list using custom kinase-substrate sets.
+
+        Parameters
+        ----------
+        custom_kin_sets : dict
+            A dictionary of custom kinase-substrate sets where keys are kinase names and values are lists of substrates.
+        kinases : list, optional
+            If provided, kinase enrichment will only be calculated for the specified kinases from custom_kin_sets. The default is None, which uses all kinases in custom_kin_sets.
+        kin_type : str, optional
+            A label to identify the type of custom kinase sets being used. The default is 'custom'.
+        **GSEApy parameters: weight, threads, min_size, max_size, permutation_num, seed, gseapy_verbose
+
+        Returns
+        -------
+        enrichemnt_results : pd.DataFrame
+            pd.Dataframe with results of MEA for the custom kinase-substrate sets.
+        """
+
+        if not isinstance(custom_kin_sets, dict) or not custom_kin_sets:
+            raise ValueError('custom_kin_sets must be a non-empty dictionary with kinase names as keys and substrate lists as values.')
+
+        if kinases is None:
+            kinases = list(custom_kin_sets.keys())
+        elif isinstance(kinases, str):
+            kinases = [kinases]
+
+        kinases = [x.upper() for x in kinases]
+
+        filtered_kin_sets = {k: v for k, v in custom_kin_sets.items() if k in kinases}
+        if not filtered_kin_sets:
+            raise ValueError('No kinases from the provided list were found in custom_kin_sets.')
+
+        ranked_subs = self.dp_data_pps.data.set_index(_global_vars.default_seq_col)[self.rank_col].sort_values(ascending=False)
+
+        prerank_results = gp.prerank(rnk=ranked_subs,
+                             gene_sets=filtered_kin_sets,
+                             weight=weight,
+                             threads=threads,
+                             min_size=min_size,
+                             max_size=max_size,
+                             permutation_num=permutation_num,
+                             seed=seed,
+                             verbose=gseapy_verbose)
+
+        res_col_converter = {'Term': 'Kinase', 'ES': 'ES', 'NES': 'NES', 'NOM p-val': 'p-value', 'FDR q-val': 'FDR', 'Tag %': 'Subs fraction', 'Lead_genes': 'Leading substrates'}
+
+        enrichment_data = prerank_results.res2d.drop(['Name', 'FWER p-val', 'Gene %'], axis=1).rename(columns=res_col_converter)
+        enrichment_data['p-value'] = enrichment_data['p-value'].replace(0,1/permutation_num).astype(float) #Setting p-value of zero to 1/(# of permutations)
+        enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
+        sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase')
+
+        enrichemnt_results = MeaEnrichmentResults(
+            enrichment_results=sorted_enrichment_data,
+            pps_data=self,
+            kin_sub_sets=filtered_kin_sets,
+            gseapy_obj=prerank_results,
+            kin_type=kin_type,
+            kl_method='custom',
+            kl_thresh=None,
+            tested_kins=kinases,
+            data_att='custom',
+            kl_comp_direction=None
+        )
+
+        return enrichemnt_results
+
 #%%
 
 class MeaEnrichmentResults(object):
