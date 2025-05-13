@@ -231,6 +231,8 @@ class RankedPhosData(object):
         if not isinstance(custom_kin_sets, dict) or not custom_kin_sets:
             raise ValueError('custom_kin_sets must be a non-empty dictionary with kinase names as keys and substrate lists as values.')
 
+        custom_kin_sets = {k.upper(): v for k, v in custom_kin_sets.items()}
+
         if kinases is None:
             kinases = list(custom_kin_sets.keys())
         elif isinstance(kinases, str):
