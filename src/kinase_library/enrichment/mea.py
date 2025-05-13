@@ -137,7 +137,7 @@ class RankedPhosData(object):
         Returns
         -------
         enrichment_results : pd.DataFrame
-            pd.Dataframe with results of MEA for the specified KL method and threshold.
+            pd.DataFrame with results of MEA for the specified KL method and threshold.
         """
 
         exceptions.check_kl_method(kl_method)
@@ -225,7 +225,7 @@ class RankedPhosData(object):
         Returns
         -------
         enrichment_results : pd.DataFrame
-            pd.Dataframe with results of MEA for the custom kinase-substrate sets.
+            pd.DataFrame with results of MEA for the custom kinase-substrate sets.
         """
 
         if not isinstance(custom_kin_sets, dict) or not custom_kin_sets:
