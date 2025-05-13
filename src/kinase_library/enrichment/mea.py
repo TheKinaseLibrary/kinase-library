@@ -136,7 +136,7 @@ class RankedPhosData(object):
 
         Returns
         -------
-        enrichemnt_results : pd.DataFrame
+        enrichment_results : pd.DataFrame
             pd.Dataframe with results of MEA for the specified KL method and threshold.
         """
 
@@ -197,11 +197,11 @@ class RankedPhosData(object):
         enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
         sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase').reindex(data.get_kinase_list(kin_type, non_canonical=non_canonical))
 
-        enrichemnt_results = MeaEnrichmentResults(enrichment_results=sorted_enrichment_data, pps_data=self, kin_sub_sets=kin_sub_sets, gseapy_obj=prerank_results,
+        enrichment_results = MeaEnrichmentResults(enrichment_results=sorted_enrichment_data, pps_data=self, kin_sub_sets=kin_sub_sets, gseapy_obj=prerank_results,
                                                    kin_type=kin_type, kl_method=kl_method, kl_thresh=kl_thresh, tested_kins=kinases,
                                                    data_att=data_att, kl_comp_direction=kl_comp_direction)
 
-        return enrichemnt_results
+        return enrichment_results
 
 
     def mea_custom(self, custom_kin_sets,
@@ -224,7 +224,7 @@ class RankedPhosData(object):
 
         Returns
         -------
-        enrichemnt_results : pd.DataFrame
+        enrichment_results : pd.DataFrame
             pd.Dataframe with results of MEA for the custom kinase-substrate sets.
         """
 
@@ -261,7 +261,7 @@ class RankedPhosData(object):
         enrichment_data['FDR'] = enrichment_data['FDR'].replace(0,enrichment_data['FDR'][enrichment_data['FDR'] != 0].min()).astype(float) #Setting FDR of zero to lowest FDR in data
         sorted_enrichment_data = enrichment_data.sort_values('Kinase').set_index('Kinase')
 
-        enrichemnt_results = MeaEnrichmentResults(
+        enrichment_results = MeaEnrichmentResults(
             enrichment_results=sorted_enrichment_data,
             pps_data=self,
             kin_sub_sets=filtered_kin_sets,
@@ -274,7 +274,7 @@ class RankedPhosData(object):
             kl_comp_direction=None
         )
 
-        return enrichemnt_results
+        return enrichment_results
 
 #%%
 
