@@ -23,7 +23,7 @@ def check_kin_name(kinases, kin_type=None, valid_kin_list=None):
     for kin in kinases:
         if kin.upper() not in valid_kin_list:
             raise Exception('Matrix was not found for kinase \'{}\'. Use \'get_kinase_list\' for available kinases.'.format(kin))
-            
+
 def check_kin_type(kin_type):
     if kin_type not in _global_vars.valid_kin_types:
         raise ValueError('kin_type must be one of the following: {}'.format(_global_vars.valid_kin_types))
@@ -95,12 +95,12 @@ def check_output_sort_by(sort_by):
 def check_phosprot_file_type(file_type):
     if file_type not in _global_vars.phosprot_file_type:
         raise ValueError('Phosphoproteome files type must be one of the following: {}'.format(_global_vars.phosprot_file_type))
-        
+
 def check_phosprot_name(phosprot_name):
     valid_phosprot_name = data.get_phosphoproteomes_list()
     if phosprot_name not in valid_phosprot_name:
         raise ValueError('Phosphoproteome named \'{}\' was not found. Use kl.get_phosphoproteomes_list() to get a list of available phosphoproteomes.'.format(phosprot_name))
-      
+
 #%%
 """
 Phosphoproteomics
@@ -142,8 +142,12 @@ Plotting
 
 def check_color_kins_method(color_kins_by):
     if color_kins_by not in _global_vars.valid_color_kins_method:
-        raise ValueError('color_kins_by must be one of the followings: {}'.format(_global_vars.valid_color_kins_method))
+        raise ValueError('color_kins_by must be one of the following: {}'.format(_global_vars.valid_color_kins_method))
 
 def check_cluster_method(cluster_by):
     if cluster_by not in _global_vars.valid_cluster_method:
-        raise ValueError('cluster_by must be one of the followings: {}'.format(_global_vars.valid_cluster_method))
+        raise ValueError('cluster_by must be one of the following: {}'.format(_global_vars.valid_cluster_method))
+
+def check_labels_type(kins_label_type):
+    if kins_label_type not in _global_vars.valid_labels_category:
+        raise ValueError('kins_label_type must be one of the following: {}'.format(_global_vars.valid_labels_category))

@@ -47,7 +47,8 @@ valid_mat_scale = {'linear','log'}
 valid_name_types = {'kinase','gene','matrix','uniprot_id'}
 valid_aa = {'P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E','s','t','y','X','x','-','_','*'}
 valid_score_output_type = {'series','list','dict'}
-valid_output_sort_by= {'input','name','value','score','percentile'}
+valid_output_sort_by = {'input','name','value','score','percentile'}
+valid_labels_category = {'display', 'matrix', 'protein', 'gene'}
 
 # Valid scoring and enrichment parameters
 valid_scoring_metric = {'score','percentile'}
