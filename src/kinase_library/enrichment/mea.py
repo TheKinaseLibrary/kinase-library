@@ -564,15 +564,7 @@ class MeaEnrichmentResults(object):
         if kinases is None:
             kinases = self.tested_kins
 
-        kinome_info = data.get_kinome_info()
-        if kins_label_type == 'display':
-            kins_labels = kinome_info.set_index('MATRIX_NAME')['DISPLAY_NAME'].to_dict()
-        elif kins_label_type == 'gene':
-            kins_labels = kinome_info.set_index('MATRIX_NAME')['GENE_NAME'].to_dict()
-        elif kins_label_type == 'matrix':
-            kins_labels = dict(zip(kinome_info['MATRIX_NAME'], kinome_info['MATRIX_NAME']))
-        elif kins_label_type == 'protein':
-            kins_labels = kinome_info.set_index('MATRIX_NAME')['KINASE'].to_dict()
+        kins_labels = data.get_label_map(label_type=kins_label_type)
 
         if kins_label_dict is not None:
             if set(kins_label_dict) - set(kins_labels.values()):
