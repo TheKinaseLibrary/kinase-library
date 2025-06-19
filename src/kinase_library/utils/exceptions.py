@@ -142,12 +142,12 @@ Plotting
 
 def check_color_kins_method(color_kins_by):
     if color_kins_by not in _global_vars.valid_color_kins_method:
-        raise ValueError('color_kins_by must be one of the followings: {}'.format(_global_vars.valid_color_kins_method))
+        raise ValueError('color_kins_by must be one of the following: {}'.format(_global_vars.valid_color_kins_method))
 
 def check_cluster_method(cluster_by):
     if cluster_by not in _global_vars.valid_cluster_method:
-        raise ValueError('cluster_by must be one of the followings: {}'.format(_global_vars.valid_cluster_method))
+        raise ValueError('cluster_by must be one of the following: {}'.format(_global_vars.valid_cluster_method))
 
 def check_labels_type(kins_label_type):
     if kins_label_type not in _global_vars.valid_labels_category:
-        raise ValueError('kins_label_type must be one of the followings: {}'.format(_global_vars.valid_labels_category))
+        raise ValueError('kins_label_type must be one of the following: {}'.format(_global_vars.valid_labels_category))
