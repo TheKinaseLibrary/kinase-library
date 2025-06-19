@@ -752,6 +752,17 @@ def get_families(kin_type):
     return(families)
 
 
+def get_label_map(label_type, kin_type=None):
+
+    exceptions.check_labels_type(label_type)
+    if kin_type is not None:
+        exceptions.check_kin_type(kin_type)
+
+    kinome_info = get_kinome_info(kin_type=kin_type)
+
+    return(kinome_info.set_index('MATRIX_NAME', drop=False)[_global_vars.label_type_column[label_type]].to_dict())
+
+
 #%%
 """
 ##########################
