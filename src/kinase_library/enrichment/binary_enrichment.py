@@ -507,7 +507,8 @@ class EnrichmentResults(object):
 
     def plot_volcano(self, sig_lff=0, sig_pval=0.1, fg_percent_thresh=0, fg_percent_col='fg_percent', kinases=None,
                      lff_col='log2_freq_factor', adj_pval=True, highlight_kins=None, ignore_depleted=False,
-                     kins_label_dict=None, label_kins=None, adjust_labels=True, labels_fontsize=7,
+                     kins_label_type='display', kins_label_dict=None,
+                     label_kins=None, adjust_labels=True, labels_fontsize=7,
                      symmetric_xaxis=True, grid=True, max_window=False,
                      title=None, stats=True, xlabel='log$_2$(Frequency Factor)', ylabel=None,
                      plot=True, save_fig=False, return_fig=False,
@@ -535,6 +536,8 @@ class EnrichmentResults(object):
             List of kinases to be marked in yellow on the kinase enrichment volcano plot.
         ignore_depleted : bool, optional
             Ignore kinases that their FF is negative (depleted). The default is False.
+        kins_label_type : str, optional
+            Dictionary with customized labels for each kinase. The default is the display category (custom curated list).  Use kl.get_display_names to retrieve the labels in each category.
         kins_label_dict : dict, optional
             Dictionary with customized labels for each kinase. The default is None.
         label_kins : list, optional
@@ -575,6 +578,8 @@ class EnrichmentResults(object):
         If return_fig, the kinase enrichment volcano plot.
         """
 
+        exceptions.check_labels_type(kins_label_type)
+
         if stats:
             fg_size = len(getattr(self.pps_data.fg_pps, self.kin_type+'_'+self.kl_method+'s'))
             bg_size = len(getattr(self.pps_data.bg_pps, self.kin_type+'_'+self.kl_method+'s'))
@@ -595,20 +600,27 @@ class EnrichmentResults(object):
         else:
             kinases = fg_percent_kins
 
-        if kins_label_dict:
-            kinases = [kins_label_dict[x] for x in kinases]
-            return enrichment.plot_volcano(self.enrichment_results.rename(kins_label_dict), sig_lff=sig_lff, sig_pval=sig_pval, kinases=kinases,
+        kinome_info = data.get_kinome_info()
+        if kins_label_type == 'display':
+            kins_labels = kinome_info.set_index('MATRIX_NAME')['DISPLAY_NAME'].to_dict()
+        elif kins_label_type == 'gene':
+            kins_labels = kinome_info.set_index('MATRIX_NAME')['GENE_NAME'].to_dict()
+        elif kins_label_type == 'matrix':
+            kins_labels = dict(zip(kinome_info['MATRIX_NAME'], kinome_info['MATRIX_NAME']))
+        elif kins_label_type == 'protein':
+            kins_labels = kinome_info.set_index('MATRIX_NAME')['KINASE'].to_dict()
+
+        if kins_label_dict is not None:
+            if set(kins_label_dict) - set(kins_labels.values()):
+                ValueError(f'Warning: kins_label_dict has unexpected keys: {set(kins_label_dict) - set(kins_labels.values())}')
+            kins_labels = {k: kins_label_dict[v] if v in kins_label_dict else v for k,v in kins_labels.items()}
+
+        kinases = [kins_labels[x] for x in kinases]
+
+        return enrichment.plot_volcano(self.enrichment_results.rename(kins_labels), sig_lff=sig_lff, sig_pval=sig_pval, kinases=kinases,
                                            lff_col=lff_col, pval_col=pval_col, highlight_kins=highlight_kins, ignore_depleted=ignore_depleted,
                                            label_kins=label_kins, adjust_labels=adjust_labels, labels_fontsize=labels_fontsize,
                                            symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                                            title=title, xlabel=xlabel, ylabel=ylabel,
                                             plot=plot, save_fig=save_fig, return_fig=return_fig,
                                             ax=ax, **plot_kwargs)
-        else:
-            return enrichment.plot_volcano(self.enrichment_results, sig_lff=sig_lff, sig_pval=sig_pval, kinases=kinases,
-                                           lff_col=lff_col, pval_col=pval_col, highlight_kins=highlight_kins, ignore_depleted=ignore_depleted,
-                                           label_kins=label_kins, adjust_labels=adjust_labels, labels_fontsize=labels_fontsize,
-                                           symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
-                                           title=title, xlabel=xlabel, ylabel=ylabel,
-                                           plot=plot, save_fig=save_fig, return_fig=return_fig,
-                                           ax=ax, **plot_kwargs)
