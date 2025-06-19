@@ -4,6 +4,7 @@
 ########################################################
 """
 
+import os
 import pandas as pd
 import gseapy as gp
 
