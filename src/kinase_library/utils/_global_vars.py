@@ -70,3 +70,4 @@ aa_colors = {'D': '#DC143C', 'E': '#DC143C', 's': '#DC143C', 't': '#DC143C', 'y'
 # Others
 kl_method_comp_direction_dict = {'score':'higher', 'percentile':'higher', 'score_rank':'lower', 'percentile_rank':'lower'}
 default_seq_col = 'Sequence'
+label_type_column = {'display': 'DISPLAY_NAME', 'matrix': 'MATRIX_NAME', 'protein': 'KINASE', 'gene': 'GENE_NAME'}
