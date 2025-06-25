@@ -1238,7 +1238,7 @@ class ScoredPhosphoProteome(object):
     >>> spp = kl.ScoredPhosphoProteome()
     >>> spp.ser_thr
                            AAK1  ACVR2A  ACVR2B    AKT1  ...   YANK3    YSK1    YSK4     ZAK
-        SITE_+/-7_AA                                     ...
+        Sequence                                     ...
         __MtMDksELVQkAk -3.6796  1.8284  1.9022 -5.8160  ... -0.1768 -7.1092 -2.2866 -3.0714
         NEERNLLsVAykNVV -6.6282 -0.4899 -0.4783  0.4972  ... -0.0312 -0.9182 -0.9721  0.9999
         VVGARRssWRVISsI -6.4300 -1.9120 -2.5666  6.0576  ...  3.0207  1.4549  1.3652 -0.3073
