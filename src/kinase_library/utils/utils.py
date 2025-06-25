@@ -3,7 +3,6 @@
 # The Kinase Library - Utilities #
 ##################################
 """
-import os
 import re
 import string
 import numpy as np
@@ -11,7 +10,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from .. import logomaker
 from tqdm import tqdm
-from Bio import SeqIO
 from sklearn.preprocessing import MultiLabelBinarizer
 import warnings
 
@@ -58,7 +56,7 @@ def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='log2', cols
     df_mat : pd.DataFrame
         Matrix as Pandas dataframe.
     """
-    
+
     if cols is None:
         if mat_type == 'densitometry':
             cols = [str(i) for i in range(mat.shape[1])]
@@ -69,13 +67,13 @@ def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='log2', cols
                 cols = _global_vars.aa_phos
             else:
                 cols = _global_vars.aa_all_ptm
-                
+
     if rows is None:
         if mat_type == 'densitometry':
             rows = list(string.ascii_uppercase[:mat.shape[1]])
         elif (mat_type in _global_vars.valid_mat_types) and (kin_type in _global_vars.valid_kin_types):
                 rows = data.get_positions(kin_type)
-    
+
     if len(rows) != mat.shape[0]:
         if rows is None:
             raise Exception('As default, {} matrices must be of shape of {}'.format(kin_type,(len(rows),len(cols))))
@@ -86,9 +84,9 @@ def matrix_to_df(mat, kin_type=None, pp=True, k_mod=False, mat_type='log2', cols
             raise Exception('As default, {} matrices must be of shape of {}'.format(kin_type,(len(rows),len(cols))))
         else:
             raise Exception('Length of provided columns ({}) does not match the number of columns in the provided matrix ({})'.format(len(cols),mat.shape[1]))
-    
+
     df_mat = pd.DataFrame(mat, index=rows, columns=cols)
-    
+
     return(df_mat)
 
 
@@ -106,7 +104,7 @@ def flatten_matrix(matrix):
     flat_matrix : np.ndarray
         Flatten matrix.
     """
-    
+
     flat_matrix = matrix.transpose().values.reshape(matrix.shape[0] * matrix.shape[1],1).transpose()
     return (flat_matrix)
 
@@ -180,10 +178,10 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
     fig : plt.figure()
         If specified, returning the figure object with the sequence logo.
     """
-    
+
     if font_name == 'Arial Rounded MT Bold' and font_name not in logomaker.list_font_names():
         font_name = 'sans'
-    
+
     if ax is None:
         zero_lw = 3
         fig,ax = plt.subplots(figsize = [10,5])
@@ -192,10 +190,10 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
         plot = False
         if save_fig or return_fig:
             raise ValueError('When Axes provided, \'save_fig\', and \'return_fig\' must be False.')
-    
-    if color_dict is None: 
+
+    if color_dict is None:
         color_dict = _global_vars.aa_colors
-    
+
     if logo_type == 'ratio_to_random':
         if random_aa_value is None:
             raise Exception('If method is specified to be ratio to random, \'random_aa_value\' must be provided.')
@@ -213,7 +211,7 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
         norm_zero_pos = {key: zero_pos[key]/sum(zero_pos.values())*max_height for key in zero_pos.keys()}
         for aa in zero_pos.keys():
             height_matrix.loc[0,aa] = norm_zero_pos[aa]
-    
+
         xlims = ax.get_xlim()
         ylims = ax.get_ylim()
         logomaker.Logo(pd.DataFrame(height_matrix.loc[0]).transpose(), ax=ax, color_scheme=zero_pos_color, flip_below=flip_below, font_name=font_name)
@@ -224,7 +222,7 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
             ax.set_ylim(ylims)
     else:
         ax.axvline(0, color='k', linewidth=3, linestyle=':')
-    
+
     ax.set_xticks(ticks=sorted(height_matrix.index))
     ax.set_xticklabels(labels=['' if not xticks else str(x) if x<=0 else '+'+str(x) for x in sorted(height_matrix.index)], fontsize=xticks_fontsize, weight = 'bold')
     if yticks:
@@ -233,7 +231,7 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
         ax.tick_params(axis='y', which='both', left=False, labelleft=False)
     if title is not None:
         ax.set_title(title, fontsize=24)
-    
+
     if xlabel != False:
         ax.set_xlabel(xlabel, fontsize=xlabel_size)
     if ylabel != False:
@@ -246,24 +244,24 @@ def make_seq_logo(matrix, logo_type='ratio_to_median', random_aa_value=0.05,
                 ax.set_ylabel('Probability',fontsize = ylabel_size)
         else:
             ax.set_ylabel(ylabel, fontsize=ylabel_size)
-    
+
     if save_fig:
         fig.savefig(save_fig)
-    
+
     try:
         fig.tight_layout()
     except:
         pass
-    
+
     if not plot:
         try:
             plt.close(fig)
         except:
             pass
-    
+
     if return_fig:
         return(fig)
-    
+
 
 #%%
 """
@@ -296,27 +294,27 @@ def filter_invalid_subs(data, seq_col, suppress_warnings=True):
     omitted_enteries : pd.DataFrame
         Dropped enteries due to invalid sequence.
     """
-    
+
     data_no_na = data[data[seq_col].notna()]
     if not suppress_warnings and ((len(data)-len(data_no_na))>0):
         print(str(len(data)-len(data_no_na)) + ' entries were omitted due to empty value in the substrates column.')
-    
+
     escaped_aa_list = [re.escape(c) for c in _global_vars.valid_aa]
     data_no_invalid_aa = data_no_na[data_no_na[seq_col].astype(str).str.contains('^['+''.join(escaped_aa_list)+']+$')]
     if not suppress_warnings and ((len(data_no_na)-len(data_no_invalid_aa))>0):
         print(str(len(data_no_na)-len(data_no_invalid_aa)) + ' entries were omitted due to invalid amino acids or characters.')
-    
+
     data_no_even = data_no_invalid_aa[(data_no_invalid_aa[seq_col].str.len())%2 != 0]
     if not suppress_warnings and ((len(data_no_invalid_aa)-len(data_no_even))>0):
         print(str(len(data_no_invalid_aa)-len(data_no_even)) + ' entries were omitted due to even length (no central position).')
-    
+
     data_no_invalid_phos_acc = data_no_even[data_no_even[seq_col].apply(lambda x: x[len(x)//2]).isin(_global_vars.valid_phos_res)]
     if not suppress_warnings and ((len(data_no_even)-len(data_no_invalid_phos_acc))>0):
         print(str(len(data_no_even)-len(data_no_invalid_phos_acc)) + ' entries were omitted due to invalid central phosphoacceptor.')
 
     omitted_enteries = pd.concat([data, data_no_invalid_phos_acc])
     omitted_enteries = omitted_enteries.loc[omitted_enteries.astype(str).drop_duplicates(keep=False).index] #In order to deal with lists in the DataFrame
-    
+
     return(data_no_invalid_phos_acc, omitted_enteries)
 
 
@@ -344,7 +342,7 @@ def sequence_to_substrate(seq, pp=False, phos_pos=None, kin_type=None, validate_
     substrate : str
         15-mer with phosphoacceptor at the center.
     """
-    
+
     if validate_phos_res:
         if phos_pos is None:
             if (seq[len(seq)//2].lower() not in ['s','t','y']) | (len(seq) % 2 == 0):
@@ -354,27 +352,27 @@ def sequence_to_substrate(seq, pp=False, phos_pos=None, kin_type=None, validate_
     if validate_aa:
         if not _global_vars.valid_aa.issuperset(seq.upper()):
             raise Exception('Sequence contains invalid amino acids or characters ({}).\nAllowed characters are: {}'.format(seq.upper(),_global_vars.valid_aa))
-    
+
     if seq is np.nan:
         return(None)
 
     if phos_pos is None:
         phos_pos = len(seq)//2 + 1
-    
+
     if kin_type is not None:
         exceptions.check_kin_type(kin_type)
         phos_acc = seq[phos_pos-1]
         if phos_acc not in _global_vars.kin_type_phos_acc[kin_type]:
             raise Exception(f'Mismatch beteween kinase type ({kin_type}) and phosphoacceptor ({phos_acc}): {seq}')
-        
+
     pad_seq = '_'*7 + seq + '_'*7
     substrate = pad_seq[phos_pos-1:phos_pos+14]
-    
+
     if pp:
         substrate = ''.join([x.upper() if x not in ['s','t','y'] else x for x in substrate[:7]]) + substrate[7].lower() + ''.join([x.upper() if x not in ['s','t','y'] else x for x in substrate[8:]])
     else:
         substrate = substrate[:7].upper() + substrate[7].lower() + substrate[8:].upper()
-    
+
     return(substrate)
 
 
@@ -407,7 +405,7 @@ def sub_binary_matrix(substrates, pp=True, aa=None, pos=None, sub_pos=None, seq_
         If input is one substrate - returns single binary martix.
         If input is list of substrates - returns dataframe with flattened binary matrices.
     """
-    
+
     if isinstance(substrates, str):
         subs_list = pd.Series([substrates], name='Sequence')
     elif isinstance(substrates, list):
@@ -420,19 +418,19 @@ def sub_binary_matrix(substrates, pp=True, aa=None, pos=None, sub_pos=None, seq_
         subs_list = substrates[seq_col]
     else:
         raise Exception('Invalid substrates list.')
-        
+
     if not pp:
         subs_list = subs_list.apply(lambda x: unprime_substrate(x))
-    
+
     if pos is None:
         pos = list(range(1,max([len(x) for x in subs_list])+1))
     if sub_pos is None:
         sub_pos = range(-7,8)
     if aa is None:
         aa = data.get_aa()
-    
+
     subs_pos_aa = [[str(p)+a for a,p in zip(sub,sub_pos)] for sub in subs_list]
-    
+
     bin_mat_classes = [str(pos)+a for pos in pos for a in aa]
     mlb = MultiLabelBinarizer(classes=bin_mat_classes)
     with warnings.catch_warnings():
@@ -441,13 +439,13 @@ def sub_binary_matrix(substrates, pp=True, aa=None, pos=None, sub_pos=None, seq_
 
     if isinstance(substrates, str):
         return(pd.DataFrame(bin_mat.reshape(len(pos), len(aa)), index=pos, columns=aa).T)
-    
+
     if as_dict:
         bin_df = [pd.DataFrame(bin_mat.reshape(len(pos), len(aa)), index=pos, columns=aa).T for x in bin_mat]
         return(dict(zip(subs_list,bin_df)))
-    
+
     sub_mat = pd.DataFrame(bin_mat, index=subs_list, columns=bin_mat_classes)
-    
+
     return(sub_mat)
 
 
@@ -465,7 +463,7 @@ def substrate_type(sub):
     sub_type : str
         Substrate type ('ser_thr', 'tyrosine', or 'unknown').
     """
-    
+
     if sub[7].lower() in ['s','t']:
         sub_type = 'ser_thr'
     elif sub[7].lower() == 'y':
@@ -489,10 +487,82 @@ def unprime_substrate(sub):
     un_primed_sub : str
         The input substrate without phospho-residues.
     """
-        
+
     un_primed_sub = sub[:7].upper() + sub[7] + sub[8:].upper()
     return(un_primed_sub)
 
+
+#%%
+"""
+###################
+# Other utilities #
+###################
+"""
+
+def parse_phosphosites(sequence, phosphoacceptor=['S', 'T', 'Y'], pp=False):
+    """
+    Parse protein sequence to identify phosphorylation sites.
+
+    Parameters
+    ----------
+    sequence : str
+        Protein sequence using one-letter amino acid codes.
+    phosphoacceptor : List[str], optional
+        Phosphoacceptors to parse (any combination of 'S', 'T', 'Y'). Default is ['S', 'T', 'Y'].
+    pp : bool, optional
+        Phospho-priming. If False, all non-central residues uppercase.
+        If True, keep S/T/Y case, others uppercase. Default is False.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns: residue, position, window.
+        Window is 15-mer centered on phosphosite, padded with '-'.
+    """
+
+    if not set(phosphoacceptor).issubset(_global_vars.valid_phos_res):
+        raise ValueError(f'Phosphoacceptor(s) must be a subset of {_global_vars.valid_phos_res}.')
+
+    # Create regex pattern for phosphoacceptors
+    pattern = '[' + ''.join([aa.upper() + aa.lower() for aa in phosphoacceptor]) + ']'
+
+    # Find all matches with their positions
+    matches = [(m.group(), m.start()) for m in re.finditer(pattern, sequence)]
+
+    sites = []
+
+    for residue, i in matches:
+        # Create 15-mer window
+        start_idx = max(0, i - 7)
+        end_idx = min(len(sequence), i + 8)
+        window_seq = sequence[start_idx:end_idx]
+
+        # Pad with '_'
+        upstream_pad = max(0, 7-i)
+        downstream_pad = max(0, (i+8) - len(sequence))
+        raw_window = '_'*upstream_pad + window_seq + '_'*downstream_pad
+
+        # Apply phospho-priming rules
+        if pp:
+            # Keep S/T/Y case, others uppercase, central always lowercase
+            window = ''.join([
+                char.upper() if char.upper() not in 'STY' else char
+                for char in raw_window[:7]
+            ]) + raw_window[7].lower() + ''.join([
+                char.upper() if char.upper() not in 'STY' else char
+                for char in raw_window[8:]
+            ])
+        else:
+            # All uppercase except central (lowercase)
+            window = raw_window[:7].upper() + raw_window[7].lower() + raw_window[8:].upper()
+
+        sites.append({
+            'Residue': residue.lower(),
+            'Position': i + 1,
+            'Sequence': window
+        })
+
+    return pd.DataFrame(sites)
 
 #%%
 """
@@ -514,7 +584,7 @@ def list_font_names():
     fontname : list
         List of valid font_name names from logomaker. This will vary from system to system.
     """
-    
+
     return logomaker.list_font_names()
 
 
@@ -534,7 +604,7 @@ def list_series_to_df(subs_list, col_name=None):
     -------
     pd.DataFrame with one column containing the list or pd.Series.
     """
-    
+
     if isinstance(subs_list, pd.Series):
             return(subs_list.to_frame(name=col_name))
     if isinstance(subs_list, list):
