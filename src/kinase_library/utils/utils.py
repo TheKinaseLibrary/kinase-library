@@ -494,9 +494,9 @@ def unprime_substrate(sub):
 
 #%%
 """
-###################
-# Other utilities #
-###################
+###########
+# Protein #
+###########
 """
 
 def parse_phosphosites(sequence, phosphoacceptor=['S', 'T', 'Y'], pp=False):

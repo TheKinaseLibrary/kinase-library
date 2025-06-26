@@ -28,9 +28,9 @@ plt.rcParams['pdf.fonttype'] = 42
 
 #%%
 """
-###########################
+################################
 # Differential Phosphorylation #
-###########################
+################################
 """
 
 def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
@@ -73,7 +73,7 @@ def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
         raise ValueError('P-values threshold must be between 0-1.')
     if not 0<=percent_thresh<=100:
         raise ValueError('Percent threshold must be between 0-100.')
-        
+
     all_dp_data = dp_data.copy()
     if drop_na:
         dp_data = all_dp_data[~all_dp_data[lfc_col].isna()]
@@ -84,13 +84,13 @@ def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
                 print(str(len(all_dp_data)-len(dp_data)) + ' entries were dropped due to empty value in the logFC or p-value columns.')
             else:
                 print(str(len(all_dp_data)-len(dp_data)) + ' entries were dropped due to empty value in the logFC column.')
-    
+
     dropped_enteries = pd.concat([all_dp_data, dp_data])
     dropped_enteries = dropped_enteries.loc[dropped_enteries.astype(str).drop_duplicates(keep=False).index] #In order to deal with lists in the DataFrame
-    
+
     if len(dropped_enteries)>0 and not suppress_warnings:
         print('Use the \'dp_dropped_enteries\' attribute to view dropped enteries due to invalid differential phosphorylation values.')
-    
+
     if percent_rank is not None:
         if percent_rank == 'logFC':
             sorted_dp_data = dp_data.sort_values(lfc_col, ascending=False)
@@ -101,7 +101,7 @@ def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
         else:
             raise ValueError('percent_rank must be either \'logFC\' or \'pvalue\'.')
         reg_sites_dict = dict(zip(['upreg','unreg','downreg'], np.split(sorted_dp_data, [int(percent_thresh/100*len(dp_data)), int((1-percent_thresh/100)*len(dp_data))])))
-    
+
     else:
         reg_sites_dict = {}
         if lfc_thresh == 0: # In case of lfc_thresh of zero, treat lfc of 0 as unregulated
@@ -122,7 +122,7 @@ def dp_regulated_sites(dp_data, lfc_col, lfc_thresh=0,
                 reg_sites_dict['upreg'] = dp_data[dp_data[lfc_col]>=lfc_thresh]
                 reg_sites_dict['downreg'] = dp_data[dp_data[lfc_col]<=-lfc_thresh]
                 reg_sites_dict['unreg'] = dp_data[dp_data[lfc_col].abs()<lfc_thresh]
-    
+
     return(dp_data, reg_sites_dict, dropped_enteries)
 
 #%%
@@ -148,7 +148,7 @@ def combine_binary_enrichment_results(enrichment_results_dict, data_type='kl_obj
     pval_col_name : str, optional
         Adjusted p-value column name. The default is None.
         If None, will be set to 'fisher_adj_pval'.
-    
+
     Raises
     ------
     ValueError
@@ -164,35 +164,35 @@ def combine_binary_enrichment_results(enrichment_results_dict, data_type='kl_obj
 
     if data_type not in ['kl_object','data_frame']:
         raise ValueError('data_type must be either \'kl_object\' or \'data_frame\'.')
-    
+
     enrichment_results = list(enrichment_results_dict.values())
     conds_list = list(enrichment_results_dict.keys())
-    
+
     if data_type == 'data_frame':
         enrichment_results_tables = enrichment_results
     else:
         enrichment_results_tables = [res.enrichment_results for res in enrichment_results]
-        
+
     if lff_col_name is None:
         lff_col_name = 'log2_freq_factor'
     if pval_col_name is None:
         pval_col_name = 'fisher_adj_pval'
-    
+
     index_test = [x.index.to_list() == enrichment_results_tables[0].index.to_list() for x in enrichment_results_tables]
     if not np.all(index_test):
         raise ValueError('All enrichment results must have the same kinases enriched.')
     kinases = enrichment_results_tables[0].index.to_list()
-    
+
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
-    
+
     for res,cond in zip(enrichment_results_tables,conds_list):
         lff_data[cond] = res[lff_col_name]
         pval_data[cond] = res[pval_col_name]
-    
+
     return(lff_data,pval_data)
-    
-    
+
+
 def combine_diff_phos_enrichment_results(enrichment_results_dict, enrichment_type='combined', data_type='kl_object',
                                         lff_col_name=None, pval_col_name=None, cont_kins_col_name=None):
     """
@@ -234,10 +234,10 @@ def combine_diff_phos_enrichment_results(enrichment_results_dict, enrichment_typ
     exceptions.check_dp_enrichment_type(enrichment_type)
     if data_type not in ['kl_object','data_frame']:
         raise ValueError('data_type must be either \'kl_object\' or \'data_frame\'.')
-    
+
     enrichment_results = list(enrichment_results_dict.values())
     conds_list = list(enrichment_results_dict.keys())
-    
+
     if data_type == 'data_frame':
         enrichment_results_tables = enrichment_results
     else:
@@ -249,22 +249,22 @@ def combine_diff_phos_enrichment_results(enrichment_results_dict, enrichment_typ
             enrichment_results_tables = [getattr(res,enrichment_type+'_enrichment_results').enrichment_results for res in enrichment_results]
         else:
             enrichment_results_tables = [res.combined_enrichment_results for res in enrichment_results]
-    
+
     if lff_col_name is None:
         lff_col_name = 'most_sig_'*(enrichment_type=='combined') + 'log2_freq_factor'
     if pval_col_name is None:
         pval_col_name = 'most_sig_'*(enrichment_type=='combined') + 'fisher_adj_pval'
-    
+
     index_test = [x.index.to_list() == enrichment_results_tables[0].index.to_list() for x in enrichment_results_tables]
     if not np.all(index_test):
         raise ValueError('All enrichment results must have the same kinases enriched.')
     kinases = enrichment_results_tables[0].index.to_list()
-    
+
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
     if enrichment_type == 'combined':
         cont_kins_data = pd.DataFrame(False, index=kinases, columns=conds_list)
-    
+
     for res,cond in zip(enrichment_results_tables,conds_list):
         lff_data[cond] = res[lff_col_name]
         pval_data[cond] = res[pval_col_name]
@@ -278,19 +278,19 @@ def combine_diff_phos_enrichment_results(enrichment_results_dict, enrichment_typ
 
 
 def create_kin_sub_sets(data_values, threshold, comp_direction):
-    
+
     if comp_direction not in ['higher','lower']:
         raise ValueError('\'comp_direction\' must be either \'higher\' or \'lower\'.')
-    
+
     if comp_direction == 'higher':
         pred_kins = (data_values>=threshold)
     elif comp_direction == 'lower':
         pred_kins = (data_values<=threshold)
-    
+
     kins_subs_dict = {}
     for kin in tqdm(pred_kins.columns):
         kins_subs_dict[kin] = pred_kins.loc[pred_kins[kin],kin].index.to_list()
-    
+
     return(kins_subs_dict)
 
 
@@ -326,36 +326,36 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
     pval_data : pd.DataFrame
         Dataframe with adjusted p-value enrichment data of all conditions.
     """
-    
+
     if data_type not in ['kl_object','data_frame']:
         raise ValueError('data_type must be either \'kl_object\' or \'data_frame\'.')
-    
+
     enrichment_results = list(enrichment_results_dict.values())
     conds_list = list(enrichment_results_dict.keys())
-    
+
     if data_type == 'data_frame':
         enrichment_results_tables = enrichment_results
     else:
         enrichment_results_tables = [res.enrichment_results for res in enrichment_results]
-    
+
     index_test = [x.index.to_list() == enrichment_results_tables[0].index.to_list() for x in enrichment_results_tables]
     if not np.all(index_test):
         raise ValueError('All enrichment results must have the same kinases enriched.')
     kinases = enrichment_results_tables[0].index.to_list()
-    
+
     if pval_col_name is None:
         if adj_pval:
             pval_col_name = 'FDR'
         else:
             pval_col_name = 'pvalue'
-    
+
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
-    
+
     for res,cond in zip(enrichment_results_tables,conds_list):
         lff_data[cond] = res[lff_col_name]
         pval_data[cond] = res[pval_col_name]
-    
+
     return(lff_data,pval_data)
 
 
@@ -443,9 +443,9 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
         enrichment_data = enrichment_data.loc[kinases]
         if highlight_kins is not None:
             highlight_kins = [x for x in highlight_kins if x in kinases]
-    
+
     enrichment_data[pval_col] = enrichment_data[pval_col].astype(float)
-    
+
     if ignore_depleted:
         if 'most_sig_direction' in enrichment_data.columns:
             signed_log2_ff = (enrichment_data['most_sig_direction'].replace({'-': -1, '+': 1}))*enrichment_data['most_sig_log2_freq_factor']
@@ -457,11 +457,11 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
             depleted_kins = (enrichment_data[lff_col] < 0)
             enrichment_data.loc[depleted_kins, lff_col] = 0
             enrichment_data.loc[depleted_kins, pval_col] = 1
-    
+
     sig_enriched_data = enrichment_data[(enrichment_data[lff_col] >= sig_lff) & (enrichment_data[pval_col] <= sig_pval)]
     sig_depleted_data = enrichment_data[(enrichment_data[lff_col] <= -sig_lff) & (enrichment_data[pval_col] <= sig_pval)]
     non_sig_data = enrichment_data[~((np.abs(enrichment_data[lff_col]) >= sig_lff) & (enrichment_data[pval_col] <= sig_pval))]
-    
+
     if ax is None:
         existing_ax = False
         fig,ax = plt.subplots()
@@ -474,7 +474,7 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
     ax.plot(non_sig_data[lff_col],-np.log10(non_sig_data[pval_col]), markerfacecolor='black', linestyle='None', **plot_kwargs)
     ax.plot(sig_enriched_data[lff_col],-np.log10(sig_enriched_data[pval_col]), markerfacecolor='red', linestyle='None', **plot_kwargs)
     ax.plot(sig_depleted_data[lff_col],-np.log10(sig_depleted_data[pval_col]), markerfacecolor='blue', linestyle='None', **plot_kwargs)
-    
+
     if highlight_kins is not None:
         if isinstance(highlight_kins, str):
             highlight_kins = [highlight_kins]
@@ -483,15 +483,15 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
             raise ValueError(f'Some kinases to highlight are not in the enrichment results ({missing_kinases}).')
         highlight_data = enrichment_data.loc[highlight_kins]
         ax.plot(highlight_data[lff_col],-np.log10(highlight_data[pval_col]), markerfacecolor='yellow', linestyle='None', **plot_kwargs)
-    
+
     if symmetric_xaxis:
         ax.set_xlim(-abs(max(ax.get_xlim(), key=abs)), abs(max(ax.get_xlim(), key=abs)))
-    
+
     ax.axhline(-np.log10(sig_pval), ls='--', lw=1, color='k')
     if sig_lff>0:
         ax.axvline(sig_lff, ls='--', lw=1, color='k')
         ax.axvline(-sig_lff, ls='--', lw=1, color='k')
-    
+
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -502,12 +502,12 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
     ax.set_xticks(range(-xvalues,xvalues+1))
     if grid:
         ax.grid('major')
-        
+
     if max_window:
         figManager = fig.canvas.manager
         figManager.window.showMaximized()
         fig.tight_layout()
-    
+
     if label_kins is None:
         label_kins = list(sig_enriched_data.index) + list(sig_depleted_data.index)
         if highlight_kins:
@@ -526,13 +526,13 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
                 ax.annotate(kin_data.name, (kin_data[lff_col],-np.log10(kin_data[pval_col])), xytext=(2,2), textcoords='offset points', fontsize=labels_fontsize)
         if adjust_labels:
             adjust_text(labels, ax=ax, arrowprops=dict(arrowstyle='-', color='k', lw=0.5))
-    
+
     if save_fig:
         fig.savefig(save_fig, dpi=1000)
-        
+
     if not plot and not existing_ax:
         plt.close(fig)
-            
+
     if return_fig:
         return fig
 
@@ -611,20 +611,20 @@ def plot_3x3_volcanos(dp_data, kin_type, kl_method, kl_thresh, dp_lfc_col, dp_lf
         Optional keyword arguments to be passed to the kinase_enrichment function.
     plotting_kwargs : dict, optional
         Optional keyword arguments to be passed to the plot_volcano function.
-        
+
     Returns
     -------
     If return_fig, the 3x3 figure containing downregulated, upregulated, and combined kinase enrichment volcano plots.
     """
-    
+
     if len(dp_lfc_thresh) != 3:
         raise ValueError('\'dp_lfc_thresh\' must contain exactly three values.')
     if dp_pval_col is not None and len(dp_pval_thresh) != 3:
         raise ValueError('\'dp_pval_thresh\' must contain exactly three values.')
-    
+
     if seq_col is None:
         seq_col = _global_vars.default_seq_col
-    
+
     exceptions.check_kl_method(kl_method)
     print('Calculating scores for all sites')
     dp_data_pps = pps.PhosphoProteomics(data=dp_data, seq_col=seq_col, **diff_phos_kwargs)
@@ -632,17 +632,17 @@ def plot_3x3_volcanos(dp_data, kin_type, kl_method, kl_thresh, dp_lfc_col, dp_lf
         scores = dp_data_pps.score(kin_type=kin_type, kinases=kinases, values_only=True, **scoring_kwargs)
     elif kl_method in ['percentile','percentile_rank']:
         percentiles = dp_data_pps.percentile(kin_type=kin_type, kinases=kinases, values_only=True, **scoring_kwargs)
-        
+
     fig = plt.figure(constrained_layout=True)
     figManager = fig.canvas.manager
     figManager.window.showMaximized()
     subfigs = fig.subfigures(nrows=3, ncols=1)
-        
+
     for i,(lfc,pval) in enumerate(zip(dp_lfc_thresh,dp_pval_thresh)):
-        
+
         subfigs[i].suptitle(r'$\bf{' + f'DE logFC threshold: {lfc}' + f' / DE p-value threshold: {pval}'*(dp_pval_col is not None) + '}$')
         ax = subfigs[i].subplots(nrows=1, ncols=3)
-        
+
         print(f'\nLogFC threshold: {lfc}' + f' / p-value threshold: {pval}'*(dp_pval_col is not None))
         diff_phos_data = DiffPhosData(dp_data=dp_data, kin_type=kin_type,
                                     lfc_col=dp_lfc_col, lfc_thresh=lfc,
@@ -653,27 +653,27 @@ def plot_3x3_volcanos(dp_data, kin_type, kl_method, kl_thresh, dp_lfc_col, dp_lf
             diff_phos_data.submit_scores(kin_type=kin_type, scores=scores, suppress_messages=suppress_warnings)
         elif kl_method in ['percentile','percentile_rank']:
             diff_phos_data.submit_percentiles(kin_type=kin_type, percentiles=percentiles, suppress_messages=suppress_warnings)
-        
+
         enrich_results = diff_phos_data.kinase_enrichment(kl_method=kl_method, kl_thresh=kl_thresh,
                                                        **enrichment_kwargs)
-            
+
         enrich_results.plot_down_up_comb_volcanos(sig_lff=ke_sig_lff, sig_pval=ke_sig_pval, kinases=kinases,
                                                   plot_cont_kins=plot_cont_kins, highlight_kins=highlight_kins, ignore_depleted=ignore_depleted,
                                                   label_kins=label_kins, adjust_labels=adjust_labels, labels_fontsize=labels_fontsize, ax=ax,
                                                   **plotting_kwargs)
-    
+
     fig.suptitle(title)
-    
+
     if save_fig:
         fig.savefig(save_fig, dpi=1000)
-        
+
     if not plot:
         plt.close(fig)
-            
+
     if return_fig:
         return fig
-    
-    
+
+
 def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1, kinases=None,
                    plot_cont_kins=True, highlight_cont_kins=True, sort_kins_by='family',
                    cond_order=None, only_sig_kins=False, only_sig_conds = False,
@@ -692,7 +692,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     Parameters
     ----------
     lff_data : pd.DataFrame
-        Matrix containing Kinase Library enrichment log frequency factor data with kinases as index and conditions as columns. 
+        Matrix containing Kinase Library enrichment log frequency factor data with kinases as index and conditions as columns.
     pval_data : pd.DataFrame
         Matrix containing Kinase Library enrichment p_value data. Index (kinases) and columns (conditions) must be identical to lff_data.
     cont_kins : pd.DataFrame, optional
@@ -708,7 +708,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     highlight_cont_kins : boolean, optional
         Highlight contradicting kinases. The default is True.
     sort_kins_by : str, optional
-        String specifying what to sort the kinases on the figure's x-axes by. If provided, must be 'family' (default) or 'name'. 
+        String specifying what to sort the kinases on the figure's x-axes by. If provided, must be 'family' (default) or 'name'.
     cond_order : list of str, optional
         Order in which the conditions will appear on the bubblemap. This list may be a subset of conditions but may not contain extra strings. The default is None, preserving the condition order from the lff_data matrix.
     only_sig_kins : bool, optional
@@ -781,19 +781,19 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     -------
     None.
     """
-    
+
     if not ((lff_data.index.equals(pval_data.index)) and (lff_data.columns.equals(pval_data.columns))):
         raise ValueError('lff_data and pval_data must have the same columns and indices.')
-    
+
     if (pval_data == 0).any().any():
         print('Warning: zeros were detected in pval_data. All zeros were replaced with the non-zero minimal value in pval_data.')
         pval_data = pval_data.replace(0, pval_data[pval_data>0].min().min())
-    
+
     if cont_kins is None:
         cont_kins = pd.DataFrame(False, index=lff_data.index, columns=lff_data.columns)
     elif not ((lff_data.index.equals(cont_kins.index)) and (lff_data.columns.equals(cont_kins.columns))):
         raise ValueError('cont_kins must have the same columns and indices as lff_data and pval_data.')
-    
+
     if kinases is None:
         kinases = lff_data.index.to_list()
     else:
@@ -801,7 +801,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             kinases = list(dict.fromkeys(kinases))
     lff_data = lff_data.loc[kinases]
     pval_data = pval_data.loc[kinases]
-    
+
     if not sort_kins_by:
         kins_order = kinases
     elif sort_kins_by == 'family':
@@ -811,14 +811,14 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         kins_order = natsorted(kinases)
     else:
         raise ValueError('sort_kins_by must be either \'family\', \'name\', or False.')
-    
+
     if cond_order is None:
         cond_order = lff_data.columns
-    
+
     if color_kins_by:
         exceptions.check_color_kins_method(color_kins_by)
         label_info_col = color_kins_by.upper()
-        
+
         kinome_data = data.get_kinase_info(kinases)
         kin_categories_list = natsorted(kinome_data[label_info_col].unique())
         if kin_categories_colors is None:
@@ -829,7 +829,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         kin_colors = {}
         for kin,label_type in zip(kinome_data.index,kinome_data[label_info_col]):
             kin_colors[kin] = kin_categories_colors[label_type]
-    
+
     sorted_lff_data = lff_data.loc[kins_order,cond_order]
     sorted_pval_data = pval_data.loc[kins_order,cond_order]
     if highlight_cont_kins:
@@ -843,7 +843,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     if not plot_cont_kins:
         sig_lff_data = sig_lff_data.mask(cont_kins)
         sig_pval_data = sig_pval_data.mask(cont_kins)
-    
+
     if only_sig_kins:
         sig_kins = list(sig_data.loc[sig_data.any(axis=1)].index)
         sig_lff_data = sig_lff_data.loc[sig_kins]
@@ -856,7 +856,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         sorted_highlight_data = sorted_highlight_data[sig_conds]
 
     minus_log10_pval_data = -np.log10(sig_pval_data.fillna(1))
-    
+
     if kin_clust:
         if cluster_by is None:
             raise ValueError('If kin_clust is True, cluster_by must be specified.')
@@ -875,7 +875,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             sig_lff_data = sig_lff_data.iloc[hierarchy.leaves_list(Z)]
             minus_log10_pval_data = minus_log10_pval_data.iloc[hierarchy.leaves_list(Z)]
             sorted_highlight_data = sorted_highlight_data.iloc[hierarchy.leaves_list(Z)]
-    
+
     if condition_clust:
         if cluster_by is None:
             raise ValueError('If condition_clust is True, cluster_by must be specified.')
@@ -894,7 +894,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             sig_lff_data = sig_lff_data.iloc[:,hierarchy.leaves_list(Z)]
             minus_log10_pval_data = minus_log10_pval_data.iloc[:,hierarchy.leaves_list(Z)]
             sorted_highlight_data = sorted_highlight_data.iloc[:,hierarchy.leaves_list(Z)]
-    
+
     intensity_matrices = np.array_split(sig_lff_data, num_panels)
     size_matrices = np.array_split(minus_log10_pval_data, num_panels)
     highlight_matrices = np.array_split(sorted_highlight_data, num_panels)
@@ -902,13 +902,13 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     if lff_clim is None:
         lff_clim = (min(sig_lff_data.min().min(),0),max(sig_lff_data.max().max(),0))
     cnorm = mcol.TwoSlopeNorm(vmin=lff_clim[0], vcenter=0, vmax=lff_clim[1])
-    
+
     if max_pval_size is None:
         max_pval_size = np.ceil(minus_log10_pval_data.max().max())
     if max_pval_size < -np.log10(sig_pval):
         raise ValueError('max_pval_size must be equal or greater than -log10(sig_pval).')
     pval_slim = (-np.log10(sig_pval), max_pval_size)
-    
+
     if vertical:
         intensity_matrices = [mat.transpose() for mat in intensity_matrices]
         size_matrices = [mat.transpose() for mat in size_matrices]
@@ -916,19 +916,19 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
 
     fig = plt.figure(constrained_layout=constrained_layout)
     subfigs = fig.subfigures(nrows=1, ncols=2, width_ratios=[10, 1])
-    
+
     if not vertical:
         axes = subfigs[0].subplots(nrows=num_panels, ncols=1, squeeze=False).ravel()
     else:
         axes = subfigs[0].subplots(nrows=1, ncols=num_panels, squeeze=False).ravel()
-    
+
     for idx in range(num_panels):
         intensity_matrix = intensity_matrices[idx].loc[:,::-1]
         size_matrix = size_matrices[idx].loc[:,::-1]
         highlight_matrix = highlight_matrices[idx].loc[:,::-1]
 
         ax = axes[idx]
-        
+
         melt_lff = pd.melt(intensity_matrix, ignore_index=False, var_name='condition', value_name='lff').set_index('condition', append=True)[::-1]
         melt_lff.index.names = ['kinase','condition']
         melt_pval = pd.melt(size_matrix, ignore_index=False, var_name='condition', value_name='pval').set_index('condition', append=True)[::-1]
@@ -957,13 +957,13 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         else:
             eps = ((maxy - miny) / (len(ax.get_yticks()) - 1)) / 2
         ax.set_ylim(maxy+eps, miny-eps)
-        
+
         ax.grid(which='major', color='k', linestyle=':')
         ax.set_axisbelow(True)
         ax.set_aspect('equal', 'box')
         ax.tick_params(axis='x', which='major', labelsize=xlabels_size, labelrotation=90)
         ax.tick_params(axis='y', which='major', labelsize=ylabels_size)
-        
+
     fig.canvas.draw()
     axes = subfigs[0].axes
     for ax in axes:
@@ -1001,14 +1001,14 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
                 for l in ax.get_yticklabels():
                     label_color = cond_colors[l.get_text()]
                     l.set_color(label_color)
-    
+
     axes = subfigs[1].subplots(nrows=3, ncols=1, squeeze=False).ravel()
-    
+
     if family_legned and color_kins_by:
         patches = [mpatches.Patch(color=x[1], label=x[0]) for x in kin_categories_colors.items()]
         axes[0].legend(handles=patches, loc='center', title='Family', facecolor='white')
     axes[0].axis('off')
-    
+
     if pval_legend:
         size_legend_data = pd.DataFrame({'x': 0, 'y': 0, 'sizes': np.linspace(pval_slim[0], pval_slim[1], 4, dtype=int)})
         sns.scatterplot(x='x', y='y', data=size_legend_data, size='sizes', sizes=bubblesize_range, size_norm=pval_slim,
@@ -1022,7 +1022,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         axes[1].legend(handles=handles, labels=[str(10**-x) for x in size_legend_data['sizes'][:3]] + ['<'+str(10**int(-(size_legend_data['sizes'][3])))],
                        title='Adj. p-value', loc='center', labelspacing=pval_legend_spacing, facecolor='white')
     axes[1].axis('off')
-    
+
     if lff_cbar:
         axes[2].set(aspect=10)
         sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=cnorm)
@@ -1031,11 +1031,11 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         cbar.ax.set_title('log2(FF)')
     else:
         axes[2].axis('off')
-    
+
     subfigs[0].suptitle(title, fontsize=16)
     if max_window:
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
-    
+
     if save_fig:
         fig.savefig(save_fig, dpi=1000)
