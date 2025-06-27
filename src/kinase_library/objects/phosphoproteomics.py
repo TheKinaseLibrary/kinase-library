@@ -589,7 +589,7 @@ class PhosphoProteomics(object):
         pos : list, optional
             List of positions to use in the matrix rows. The default is None.
         score_round_digits : int, optional
-            Number of decimal digits for score. The default is 4.
+            Number of decimal digits for score. The default is 3.
         percentile_round_digits : int, optional
             Number of decimal digits for percentile. The default is 2.
 
