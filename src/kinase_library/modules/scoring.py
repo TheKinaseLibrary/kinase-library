@@ -74,12 +74,12 @@ def score_protein(seq, kinases=None, phosphoacceptor=['S', 'T', 'Y'],
     results = {'ser_thr': pps.predict(kin_type='ser_thr', kinases=kinases, st_fav=st_fav,
                                       score_promiscuity_threshold=score_promiscuity_threshold,
                                       percentile_promiscuity_threshold=percentile_promiscuity_threshold,
-                                      score_round_digits=percentile_promiscuity_threshold,
+                                      score_round_digits=score_round_digits,
                                       percentile_round_digits=percentile_round_digits),
                'tyrosine': pps.predict(kin_type='tyrosine', kinases=kinases, non_canonical=non_canonical,
                                        score_promiscuity_threshold=score_promiscuity_threshold,
                                        percentile_promiscuity_threshold=percentile_promiscuity_threshold,
-                                       score_round_digits=percentile_promiscuity_threshold,
+                                       score_round_digits=score_round_digits,
                                        percentile_round_digits=percentile_round_digits)
                }
 
