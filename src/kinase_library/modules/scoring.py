@@ -4,12 +4,8 @@
 ################################
 """
 
-import os
-import numpy as np
-import pandas as pd
-
 from ..objects import phosphoproteomics
-from ..utils import _global_vars, exceptions, utils
+from ..utils import _global_vars, utils
 
 #%%
 """
