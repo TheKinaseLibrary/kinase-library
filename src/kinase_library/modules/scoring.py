@@ -5,7 +5,8 @@
 """
 
 from ..objects import phosphoproteomics
-from ..utils import _global_vars, utils
+from ..utils import _global_vars, exceptions, utils
+from ..modules import data
 
 #%%
 """
@@ -62,17 +63,25 @@ def score_protein(seq, kinases=None, phosphoacceptor=['S', 'T', 'Y'],
 
     if not set(phosphoacceptor).issubset(_global_vars.valid_phos_res):
         raise ValueError(f'Phosphoacceptor(s) must be a subset of {_global_vars.valid_phos_res}.')
+    if kinases is not None:
+        kinases = [kin.upper() for kin in kinases]
+        exceptions.check_kin_name(kinases)
+        ser_thr_kins = [kin for kin in kinases if kin in data.get_kinase_list('ser_thr')]
+        tyrosine_kins = [kin for kin in kinases if kin in data.get_kinase_list('tyrosine')]
+    else:
+        ser_thr_kins = None
+        tyrosine_kins = None
 
     phos_sites = utils.parse_phosphosites(seq, phosphoacceptor=phosphoacceptor, pp=pp)
 
     pps = phosphoproteomics.PhosphoProteomics(data=phos_sites, seq_col='Sequence', pp=pp, new_seq_phos_res_cols=False, suppress_warnings=False)
 
-    results = {'ser_thr': pps.predict(kin_type='ser_thr', kinases=kinases, st_fav=st_fav,
+    results = {'ser_thr': pps.predict(kin_type='ser_thr', kinases=ser_thr_kins, st_fav=st_fav,
                                       score_promiscuity_threshold=score_promiscuity_threshold,
                                       percentile_promiscuity_threshold=percentile_promiscuity_threshold,
                                       score_round_digits=score_round_digits,
                                       percentile_round_digits=percentile_round_digits),
-               'tyrosine': pps.predict(kin_type='tyrosine', kinases=kinases, non_canonical=non_canonical,
+               'tyrosine': pps.predict(kin_type='tyrosine', kinases=tyrosine_kins, non_canonical=non_canonical,
                                        score_promiscuity_threshold=score_promiscuity_threshold,
                                        percentile_promiscuity_threshold=percentile_promiscuity_threshold,
                                        score_round_digits=score_round_digits,
