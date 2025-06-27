@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from .. import logomaker
-from tqdm import tqdm
 from sklearn.preprocessing import MultiLabelBinarizer
 import warnings
 
@@ -516,8 +515,8 @@ def parse_phosphosites(sequence, phosphoacceptor=['S', 'T', 'Y'], pp=False):
     Returns
     -------
     pd.DataFrame
-        DataFrame with columns: residue, position, window.
-        Window is 15-mer centered on phosphosite, padded with '-'.
+        DataFrame with columns: Residue, Position, Sequence.
+        Sequence is 15-mer centered on phosphosite, padded with '_'.
     """
 
     if not set(phosphoacceptor).issubset(_global_vars.valid_phos_res):

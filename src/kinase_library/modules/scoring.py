@@ -42,7 +42,7 @@ def score_protein(seq, kinases=None, phosphoacceptor=['S', 'T', 'Y'],
     percentile_promiscuity_threshold : float, optional
         Percentile threshold above which kinases are considered predicted.
     score_round_digits : int, optional
-        Number of decimal digits for score. The default is 4.
+        Number of decimal digits for score. The default is 3.
     percentile_round_digits : int, optional
         Number of decimal digits for percentile. The default is 2.
 
