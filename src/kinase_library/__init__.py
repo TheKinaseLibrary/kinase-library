@@ -24,7 +24,7 @@ tqdm.pandas(file=tqdm_out, ascii=False)
 
 #%%
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 
 #%% Loading scored phosphoproteome one time per session
 
