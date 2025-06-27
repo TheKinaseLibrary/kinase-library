@@ -15,6 +15,7 @@ from .utils import _global_vars
 from .utils.utils import *
 
 from .modules.data import *
+from .modules.scoring import *
 from .modules.enrichment import *
 
 from .logger import TqdmToLoggerWithStatus, logger
