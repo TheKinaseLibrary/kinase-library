@@ -733,7 +733,7 @@ def generate_tree(
             uniprot_id = circle.get('class').split("_")[-1]
             if kinase_uniprot_mapping.get(uniprot_id, None) in kinases:
                 val = kinase_matrix.at[kinase_uniprot_mapping.get(uniprot_id, None), color_column]
-                if val is not None:
+                if pd.notna(val) and isinstance(val, (int, float, np.integer, np.floating)):
                     color = calculate_heatmap_color(val, color_thresholds["high"], color_thresholds["middle"], color_thresholds["low"],
                                                     high_color, mid_color, low_color)
                     circle.set('fill', color)
