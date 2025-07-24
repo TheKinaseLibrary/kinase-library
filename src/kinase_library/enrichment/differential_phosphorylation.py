@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 
-from ..utils import _global_vars, exceptions
+from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
 from ..objects import phosphoproteomics as pps
 from ..enrichment import binary_enrichment as be
@@ -900,3 +900,39 @@ class DiffPhosEnrichmentResults(object):
 
         if return_fig:
             return fig
+
+    def generate_tree(self, output_path, sort_by: str ='most_sig_log2_freq_factor', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
+        """
+        Generate a colored kinome tree from the combined enrichment results.
+
+        Parameters
+        ----------
+        output_path : str
+            Destination path for the generated kinome tree image.
+        sort_by : str, optional
+            Column name to sort the DataFrame by before generating the tree. Default is 'most_sig_log2_freq_factor'.
+        sort_direction : str, optional
+            Direction to sort the DataFrame, either 'ascending' or 'descending'. Default is 'ascending'.
+        filter_top : int, optional
+            If provided, only the top N rows will be included in the tree. Default is None (no filtering).
+        **kwargs : optional
+            Additional keyword arguments to be passed to the `utils.generate_tree` function.
+        """
+
+        # Check if the sort_by column exists in the combined enrichment results
+        if sort_by not in self.combined_enrichment_results.columns:
+            raise ValueError(f"Column '{sort_by}' not found in combined enrichment results. Available columns: {self.combined_enrichment_results.columns.tolist()}")
+
+        # Check if the sort_direction is valid
+        if sort_direction not in ['ascending', 'descending']:
+            raise ValueError("sort_direction must be either 'ascending' or 'descending'.")
+        
+    
+        # Sort the DataFrame based on the specified column and direction
+        df = self.combined_enrichment_results.sort_values(by=sort_by, ascending=(sort_direction == 'ascending'))
+
+        if filter_top is not None:
+            df = df.head(filter_top)
+
+        # This kinome tree coloring will always be based on 'most_sig_log2_freq_factor'
+        return utils.generate_tree(df, output_path, "most_sig_log2_freq_factor", { "high": 3.0, "middle": 0.0, "low": -3.0 }, **kwargs)

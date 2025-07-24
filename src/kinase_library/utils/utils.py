@@ -4,6 +4,7 @@
 ##################################
 """
 import re
+import os
 import string
 import numpy as np
 import pandas as pd
@@ -608,3 +609,141 @@ def list_series_to_df(subs_list, col_name=None):
             return(subs_list.to_frame(name=col_name))
     if isinstance(subs_list, list):
             return(pd.Series(subs_list).to_frame(name=col_name))
+
+def generate_tree(
+        kinase_matrix: pd.DataFrame,
+        output_path: str,
+        color_column: str,
+        color_thresholds: dict,
+        node_size: int = 5,
+        branch_color: str = "#663636",
+        low_color: str = "#999acf",
+        mid_color: str = "#c8c8c8",
+        high_color: str = "#fa6464",
+    ):
+        """
+        Generic function to generate a colored kinome tree. See DiffPhosEnrichmentResults.generate_tree(), MeaEnrichmentResults.generate_tree(), and EnrichmentResults.generate_tree() for specific implementations.
+
+        Parameters
+        ----------
+        kinase_matrix : pd.DataFrame
+            DataFrame containing kinases as indices and numerical columns to color the nodes. e.g. the output of kl.Substrate('PSVEPPLsQETFSDL').predict()
+        output_path : str
+            Path to save the tree image.
+        color_column : str
+            Column name in the kinase matrix to use for coloring the nodes.
+        color_thresholds : dict
+            Dictionary containing the color thresholds for low, middle, and high values. e.g. { "high": 3.0, "middle": 0.0, "low": -3.0 }.
+        node_size : int
+            Size of the nodes (SVG circles). Default is 5.
+        branch_color : str
+            Hex color for the tree branches. Default is "#663636".
+        low_color : str
+            Hex color for the low end of the heatmap. Default is "#999acf".
+        mid_color : str
+            Hex color for the midpoint of the heatmap. Default is "#c8c8c8".
+        high_color : str
+            Hex color for the high end of the heatmap. Default is "#fa6464".
+        """
+
+        def hex_to_rgb(hex_color):
+            """Convert hex string like '#FF0000' to (255, 0, 0)"""
+            hex_color = hex_color.lstrip('#')
+            return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+
+        def rgb_to_hex(rgb):
+            """Convert (255, 0, 0) to '#FF0000'"""
+            return '#{:02X}{:02X}{:02X}'.format(*rgb)
+
+
+        def calculate_color(value, high_color_hex, low_color_hex, high_value, low_value):
+            high_color = hex_to_rgb(high_color_hex)
+            low_color = hex_to_rgb(low_color_hex)
+
+            new_value = max(min(value, high_value), low_value)
+            new_value -= low_value
+
+            percentage = new_value / (high_value - low_value) if high_value != low_value else 0
+
+            red = high_color[0] * percentage + low_color[0] * (1.0 - percentage)
+            green = high_color[1] * percentage + low_color[1] * (1.0 - percentage)
+            blue = high_color[2] * percentage + low_color[2] * (1.0 - percentage)
+
+            return rgb_to_hex((round(red), round(green), round(blue)))
+
+
+        def calculate_heatmap_color_midpoint(value, high_color, mid_color, low_color, high_value, mid_point_value, low_value):
+            if value < mid_point_value:
+                return calculate_color(value, mid_color, low_color, mid_point_value, low_value)
+            return calculate_color(value, high_color, mid_color, high_value, mid_point_value)
+
+
+        def calculate_heatmap_color(value, high_value, mid_point_value, low_value, high_color, mid_color, low_color):
+            return calculate_heatmap_color_midpoint(
+                value,
+                high_color,
+                mid_color,
+                low_color,
+                high_value,
+                mid_point_value,
+                low_value
+            )
+
+        # Check if output_path is valid
+        if not isinstance(output_path, str) or not output_path.endswith('.svg'):
+            raise ValueError("Output path must be a valid string ending with '.svg'.")
+
+        if kinase_matrix.get(color_column, None) is None:
+            raise ValueError(f"Column '{color_column}' not found in the kinase matrix. Please provide a valid column name.")
+
+        # Check if color thresholds are valid
+        if not all(key in color_thresholds for key in ["high", "middle", "low"]):
+            raise ValueError("Color thresholds must contain 'high', 'middle', and 'low' keys.")
+
+        kinases = kinase_matrix.index
+        
+        # Create map for quick access to kinase names
+        kinase_uniprot_mapping = {
+            row['UNIPROT_ID']: row['MATRIX_NAME']
+            for _, row in data.get_kinome_info().iterrows()
+        }
+
+        # Load the base SVG
+        import xml.etree.ElementTree as ET
+        current_dir = os.path.dirname(__file__)
+        svg_path = os.path.abspath(os.path.join(current_dir, "../databases/kinase_data/base_tree.svg"))
+        tree = ET.parse(svg_path)
+        root = tree.getroot()
+
+        # Set the branch color if not default
+        if branch_color != "#663636":
+            for line in root.findall('.//svg:path', namespaces={'svg': 'http://www.w3.org/2000/svg'}):
+                line.set('fill', branch_color)
+
+        ns = {'svg': 'http://www.w3.org/2000/svg'}
+
+        # For the top X kinases in kinase matrix, set the opacity to 1
+        for circle in root.findall('.//svg:circle', namespaces=ns):
+            uniprot_id = circle.get('class').split("_")[-1]
+            if kinase_uniprot_mapping.get(uniprot_id, None) in kinases:
+                circle.set('opacity', '1')
+
+        for circle in root.findall('.//svg:circle', namespaces=ns):
+            uniprot_id = circle.get('class').split("_")[-1]
+            if kinase_uniprot_mapping.get(uniprot_id, None) in kinases:
+                val = kinase_matrix.at[kinase_uniprot_mapping.get(uniprot_id, None), color_column]
+                if pd.notna(val) and isinstance(val, (int, float, np.integer, np.floating)):
+                    color = calculate_heatmap_color(val, color_thresholds["high"], color_thresholds["middle"], color_thresholds["low"],
+                                                    high_color, mid_color, low_color)
+                    circle.set('fill', color)
+                    circle.set('stroke', "gray")
+                    circle.set('stroke-width', "0.5px")
+                    circle.set('opacity', '1')
+                    circle.set('r', str(node_size))
+
+        try:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            tree.write(output_path)
+        except Exception as e:
+            raise Exception(f"Error saving SVG file: {e}")

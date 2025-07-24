@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+Added
+
+- New feature for generating kinome tree using same logic as website. Original kinome tree SVG sourced from [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/)
+
+## [1.5.0] - 2025-06-27
+
+Added
+
+- New feature for scoring all the possible phosphosites in an entire protein
+
+## [1.4.1] - 2025-06-19
+
+Added
+
+- Function to retrieve label mapping
+
+Changed
+
+- Label retrieval method in enrichment modules
+
+## [1.4.0] - 2025-06-18
+
+Added
+
+- New feature for displaying different label types in volcanoes: gene name, protein name, matrix name, or curated display name
+
+## [1.3.0] - 2025-05-13
+
+Added
+
+- New feature for running MEA with custom kinase-substrate sets
+- The kinase-substrate sets used in the MEA to the results
+
+Changed
+
+- Kinase name in custom sets to uppercase for consistency
+
+Fixed
+
+- Description mispellings
+
 ## [1.2.0] - 2025-04-15
 
 Added

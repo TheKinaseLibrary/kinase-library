@@ -616,3 +616,39 @@ class EnrichmentResults(object):
                                            title=title, xlabel=xlabel, ylabel=ylabel,
                                             plot=plot, save_fig=save_fig, return_fig=return_fig,
                                             ax=ax, **plot_kwargs)
+
+    def generate_tree(self, output_path, sort_by: str ='fisher_pval', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
+        """
+        Generate a colored kinome tree from the enrichment results.
+
+        Parameters
+        ----------
+        output_path : str
+            Destination path for the generated kinome tree image.
+        sort_by : str, optional
+            Column name to sort the DataFrame by before generating the tree. Default is 'fisher_pval'.
+        sort_direction : str, optional
+            Direction to sort the DataFrame, either 'ascending' or 'descending'. Default is 'ascending'.
+        filter_top : int, optional
+            If provided, only the top N rows will be included in the tree. Default is None (no filtering).
+        **kwargs : optional
+            Additional keyword arguments to be passed to the `utils.generate_tree` function.
+        """
+
+        # Check if the sort_by column exists in the enrichment results
+        if sort_by not in self.enrichment_results.columns:
+            raise ValueError(f"Column '{sort_by}' not found in enrichment results. Available columns: {self.enrichment_results.columns.tolist()}")
+
+        # Check if the sort_direction is valid
+        if sort_direction not in ['ascending', 'descending']:
+            raise ValueError("sort_direction must be either 'ascending' or 'descending'.")
+        
+    
+        # Sort the DataFrame based on the specified column and direction
+        df = self.enrichment_results.sort_values(by=sort_by, ascending=(sort_direction == 'ascending'))
+
+        if filter_top is not None:
+            df = df.head(filter_top)
+
+        # This kinome tree coloring will always be based on 'log2_freq_factor'
+        return utils.generate_tree(df, output_path, "log2_freq_factor", { "high": 3.0, "middle": 0.0, "low": -3.0 }, **kwargs)
