@@ -612,7 +612,7 @@ def list_series_to_df(subs_list, col_name=None):
 
 def generate_tree(
         kinase_matrix: pd.DataFrame,
-        path: str,
+        output_path: str,
         color_column: str,
         color_thresholds: dict,
         node_size: int = 5,
@@ -628,7 +628,7 @@ def generate_tree(
         ----------
         kinase_matrix : pd.DataFrame
             DataFrame containing kinases as indices and numerical columns to color the nodes. e.g. the output of kl.Substrate('PSVEPPLsQETFSDL').predict()
-        path : str
+        output_path : str
             Path to save the tree image.
         color_column : str
             Column name in the kinase matrix to use for coloring the nodes.
@@ -690,9 +690,9 @@ def generate_tree(
                 low_value
             )
 
-        # Check if path is valid
-        if not isinstance(path, str) or not path.endswith('.svg'):
-            raise ValueError("Path must be a valid string ending with '.svg'.")
+        # Check if output_path is valid
+        if not isinstance(output_path, str) or not output_path.endswith('.svg'):
+            raise ValueError("Output path must be a valid string ending with '.svg'.")
 
         if kinase_matrix.get(color_column, None) is None:
             raise ValueError(f"Column '{color_column}' not found in the kinase matrix. Please provide a valid column name.")
@@ -743,7 +743,7 @@ def generate_tree(
                     circle.set('r', str(node_size))
 
         try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            tree.write(path)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            tree.write(output_path)
         except Exception as e:
             raise Exception(f"Error saving SVG file: {e}")

@@ -580,14 +580,14 @@ class MeaEnrichmentResults(object):
                                            plot=plot, save_fig=save_fig, return_fig=return_fig,
                                            ax=ax, **plot_kwargs)
 
-    def generate_tree(self, path, sort_by: str ='p-value', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
+    def generate_tree(self, output_path, sort_by: str ='p-value', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
         """
         Generate a colored kinome tree from the enrichment results.
 
         Parameters
         ----------
-        path : str
-            Path to the kinome tree file.
+        output_path : str
+            Destination path for the generated kinome tree image.
         sort_by : str, optional
             Column name to sort the DataFrame by before generating the tree. Default is 'p-value'.
         sort_direction : str, optional
@@ -620,4 +620,4 @@ class MeaEnrichmentResults(object):
         minNes = nes_values.min()
 
         # This kinome tree coloring will always be based on 'NES'
-        return utils.generate_tree(df, path, "NES", { "high": maxNes, "middle": 0.0, "low": minNes }, **kwargs)
+        return utils.generate_tree(df, output_path, "NES", { "high": maxNes, "middle": 0.0, "low": minNes }, **kwargs)

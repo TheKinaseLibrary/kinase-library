@@ -901,14 +901,14 @@ class DiffPhosEnrichmentResults(object):
         if return_fig:
             return fig
 
-    def generate_tree(self, path, sort_by: str ='most_sig_log2_freq_factor', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
+    def generate_tree(self, output_path, sort_by: str ='most_sig_log2_freq_factor', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
         """
         Generate a colored kinome tree from the combined enrichment results.
 
         Parameters
         ----------
-        path : str
-            Path to the kinome tree file.
+        output_path : str
+            Destination path for the generated kinome tree image.
         sort_by : str, optional
             Column name to sort the DataFrame by before generating the tree. Default is 'most_sig_log2_freq_factor'.
         sort_direction : str, optional
@@ -935,4 +935,4 @@ class DiffPhosEnrichmentResults(object):
             df = df.head(filter_top)
 
         # This kinome tree coloring will always be based on 'most_sig_log2_freq_factor'
-        return utils.generate_tree(df, path, "most_sig_log2_freq_factor", { "high": 3.0, "middle": 0.0, "low": -3.0 }, **kwargs)
+        return utils.generate_tree(df, output_path, "most_sig_log2_freq_factor", { "high": 3.0, "middle": 0.0, "low": -3.0 }, **kwargs)
