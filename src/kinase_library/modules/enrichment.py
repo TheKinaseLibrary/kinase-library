@@ -16,6 +16,7 @@ from scipy.cluster import hierarchy
 from adjustText import adjust_text
 from natsort import natsorted, natsort_keygen
 from tqdm import tqdm
+import logging
 
 from ..utils import _global_vars, exceptions
 from . import data
@@ -25,6 +26,7 @@ pd.set_option('future.no_silent_downcasting', True)
 # mpl.use("Qt5Agg")
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 #%%
 """
@@ -373,7 +375,7 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
                  symmetric_xaxis=True, grid=True, max_window=False,
                  title=None, xlabel=None, ylabel=None,
                  plot=True, save_fig=False, return_fig=False,
-                 ax=None, **plot_kwargs):
+                 ax=None, font_family=None, **plot_kwargs):
     """
     Plot volcano plot of the Kinase Library enrichment results.
 
@@ -423,6 +425,8 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
         If true, the volcano plot will be returned as a plt.figure object. The default is False.
     ax : plt.axes, optional
         Axes provided to plot the kinase enrichment volcano onto. The default is None.
+    font_family : string, optional
+        Customized font family for the figures. The default is None.
     **plot_kwargs: optional
         Optional keyword arguments passed into the plot_volcano function, otherwise defaults will be set as seen below.
 
@@ -436,6 +440,9 @@ def plot_volcano(enrichment_data, sig_lff=0, sig_pval=0.1,
     plot_kwargs['markeredgewidth'] = plot_kwargs.get('markeredgewidth',0)
     plot_kwargs['markeredgecolor'] = plot_kwargs.get('markeredgecolor','k')
     plot_kwargs['alpha'] = plot_kwargs.get('alpha',1)
+
+    if font_family:
+        mpl.rcParams['font.family'] = font_family
 
     if kinases is not None:
         if len(kinases) != len(set(kinases)):
@@ -685,7 +692,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
                    lff_clim=(-2,2), max_pval_size=4, bubblesize_range=(10,100),
                    num_panels=6, vertical=True, constrained_layout=True,
                    xaxis_label='Condition', yaxis_label='Kinase',
-                   xlabel=True, xlabels_size=8, ylabel=True, ylabels_size=10):
+                   xlabel=True, xlabels_size=8, ylabel=True, ylabels_size=10,
+                   font_family=None):
     """
     Function to display a bubblemap with Kinase Library enrichment results inputted as log frequency factor and p-value matrices.
 
@@ -771,6 +779,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         If True, the y-axes will each be labelled with 'Condition'. The default is True.
     ylabels_size : float, optional
         If provided, float will be used to determine condition label sizes. The default is 10.
+    font_family : string, optional
+        Customized font family for the figures. The default is None.
 
     Raises
     ------
@@ -781,6 +791,9 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     -------
     None.
     """
+
+    if font_family:
+        mpl.rcParams['font.family'] = font_family
 
     if not ((lff_data.index.equals(pval_data.index)) and (lff_data.columns.equals(pval_data.columns))):
         raise ValueError('lff_data and pval_data must have the same columns and indices.')

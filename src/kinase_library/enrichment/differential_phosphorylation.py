@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
+import logging
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
@@ -17,6 +18,7 @@ from ..logger import logger
 
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
 #%%
 class DiffPhosData(object):
@@ -615,7 +617,7 @@ class DiffPhosEnrichmentResults(object):
                      title=None, stats=True, xlabel='log$_2$(Frequency Factor)',
                      ylabel='-log$_{10}$(Adjusted p-value)',
                      plot=True, save_fig=False, return_fig=False,
-                     ax=None, **plot_kwargs):
+                     ax=None, font_family=None, **plot_kwargs):
         """
         Returns a volcano plot of the Kinase Library differential phosphorylation enrichment results.
 
@@ -680,6 +682,8 @@ class DiffPhosEnrichmentResults(object):
             If true, the volcano plot will be returned as a plt.figure object. The default is False.
         ax : plt.axes, optional
             Axes provided to plot the kinase enrichment volcano onto. The default is None.
+        font_family : string, optional
+            Customized font family for the figures. The default is None.
         **plot_kwargs: optional
             Optional keyword arguments to be passed to the plot_volcano function.
 
@@ -729,7 +733,7 @@ class DiffPhosEnrichmentResults(object):
                                            symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                                            title=title, xlabel=xlabel, ylabel=ylabel,
                                            plot=plot, save_fig=save_fig, return_fig=return_fig,
-                                           ax=ax, **plot_kwargs)
+                                           ax=ax, font_family=font_family, **plot_kwargs)
 
         elif enrichment_type == 'downregulated':
             if lff_col is None:
@@ -757,7 +761,7 @@ class DiffPhosEnrichmentResults(object):
                                                symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                                                title=title, xlabel=xlabel, ylabel=ylabel,
                                                plot=plot, save_fig=save_fig, return_fig=return_fig,
-                                               ax=ax, **plot_kwargs)
+                                               ax=ax, font_family=font_family, **plot_kwargs)
 
         elif enrichment_type == 'combined':
             cont_kins = self.contradicting_kins(sig_pval=sig_pval, sig_lff=sig_lff, adj_pval=adj_pval)
@@ -798,7 +802,7 @@ class DiffPhosEnrichmentResults(object):
                                                symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                                                title=title, xlabel=xlabel, ylabel=ylabel,
                                                plot=plot, save_fig=save_fig, return_fig=return_fig,
-                                               ax=ax, **plot_kwargs)
+                                               ax=ax, font_family=font_family, **plot_kwargs)
 
 
     def plot_down_up_comb_volcanos(self, sig_lff=0, sig_pval=0.1, adj_pval=True, kinases=None,
@@ -807,7 +811,7 @@ class DiffPhosEnrichmentResults(object):
                                    symmetric_xaxis=True, grid=True, max_window=False,
                                    title=None, xlabel='log$_2$(Frequency Factor)', ylabel='-log$_{10}$(Adjusted p-value)',
                                    plot=True, save_fig=False, return_fig=False,
-                                   ax=None, **plot_kwargs):
+                                   ax=None, font_family=None, **plot_kwargs):
         """
         Returns a 1x3 figure containing downregulated, upregulated, and combined volcano plots of the Kinase Library differential phosphorylation enrichment results.
 
@@ -856,6 +860,8 @@ class DiffPhosEnrichmentResults(object):
             If true, the figure will be returned as a plt.figure object. The default is False.
         ax : plt.axes, optional
             Axes provided to plot the kinase enrichment figure onto. The default is None.
+        font_family : string, optional
+            Customized font family for the figures. The default is None.
         **plot_kwargs: optional
             Optional keyword arguments to be passed to the plot_volcano function.
 
@@ -886,7 +892,7 @@ class DiffPhosEnrichmentResults(object):
                               label_kins=label_kins, adjust_labels=adjust_labels, labels_fontsize=labels_fontsize,
                               symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                               title=plot_titles[i], xlabel=xlabel, ylabel=ylabel,
-                              ax=ax[i], **plot_kwargs)
+                              ax=ax[i], font_family=font_family, **plot_kwargs)
 
         if not existing_ax:
             fig.suptitle(title)
@@ -926,8 +932,8 @@ class DiffPhosEnrichmentResults(object):
         # Check if the sort_direction is valid
         if sort_direction not in ['ascending', 'descending']:
             raise ValueError("sort_direction must be either 'ascending' or 'descending'.")
-        
-    
+
+
         # Sort the DataFrame based on the specified column and direction
         df = self.combined_enrichment_results.sort_values(by=sort_by, ascending=(sort_direction == 'ascending'))
 

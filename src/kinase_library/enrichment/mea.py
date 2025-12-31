@@ -486,7 +486,7 @@ class MeaEnrichmentResults(object):
                      symmetric_xaxis=True, grid=True, max_window=False,
                      title=None, stats=True, xlabel='NES', ylabel=None,
                      plot=True, save_fig=False, return_fig=False,
-                     ax=None, **plot_kwargs):
+                     ax=None, font_family=None, **plot_kwargs):
         """
         Returns a volcano plot of the Kinase Library enrichment results.
 
@@ -542,6 +542,8 @@ class MeaEnrichmentResults(object):
             If true, the volcano plot will be returned as a plt.figure object. The default is False.
         ax : plt.axes, optional
             Axes provided to plot the kinase enrichment volcano onto. The default is None.
+        font_family : string, optional
+            Customized font family for the figures. The default is None.
         **plot_kwargs : optional
             Optional keyword arguments to be passed to the plot_volcano function.
 
@@ -578,7 +580,7 @@ class MeaEnrichmentResults(object):
                                            symmetric_xaxis=symmetric_xaxis, grid=grid, max_window=max_window,
                                            title=title, xlabel=xlabel, ylabel=ylabel,
                                            plot=plot, save_fig=save_fig, return_fig=return_fig,
-                                           ax=ax, **plot_kwargs)
+                                           ax=ax, font_family=font_family, **plot_kwargs)
 
     def generate_tree(self, output_path, sort_by: str ='p-value', sort_direction: str = 'ascending', filter_top: int = None, **kwargs):
         """
@@ -605,14 +607,14 @@ class MeaEnrichmentResults(object):
         # Check if the sort_direction is valid
         if sort_direction not in ['ascending', 'descending']:
             raise ValueError("sort_direction must be either 'ascending' or 'descending'.")
-        
-    
+
+
         # Sort the DataFrame based on the specified column and direction
         df = self.enrichment_results.sort_values(by=sort_by, ascending=(sort_direction == 'ascending'))
 
         if filter_top is not None:
             df = df.head(filter_top)
-        
+
         # Compute max and min NES values, ignoring NaN or non-numeric values
         nes_values = df['NES']
         nes_values = nes_values[pd.to_numeric(nes_values, errors='coerce').notnull()]
