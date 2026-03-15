@@ -1286,6 +1286,18 @@ class ScoredPhosphoProteome(object):
 
         self.log2_values = log2_values
 
+    def get_sorted_scores(self, kin_type):
+        """Return column-sorted score array, computing and caching on first call."""
+        cache_attr = '_' + kin_type + '_sorted_scores'
+        if not hasattr(self, cache_attr):
+            scores = getattr(self, kin_type + '_scores')
+            if not self.log2_values:
+                setattr(self, cache_attr, np.sort(np.log2(scores.values), axis=0))
+            else:
+                setattr(self, cache_attr, np.sort(scores.values, axis=0))
+            setattr(self, '_' + kin_type + '_sorted_columns', list(scores.columns))
+        return getattr(self, cache_attr), getattr(self, '_' + kin_type + '_sorted_columns')
+
     def merge_data_scores(self, kin_type, data_seq_col=None):
         """
         Merging phosphoproteome data and scores

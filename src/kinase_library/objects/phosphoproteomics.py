@@ -441,22 +441,22 @@ class PhosphoProteomics(object):
             exceptions.check_kin_type(kin_type)
         exceptions.check_kin_list_type(kinases, kin_type=kin_type)
 
-        if kin_type == 'ser_thr':
-            scored_phosprot = all_scored_phosprot.ser_thr_scores
-        elif kin_type == 'tyrosine':
-            scored_phosprot = all_scored_phosprot.tyrosine_scores
-        else:
+        if kin_type not in ('ser_thr', 'tyrosine'):
             raise ValueError('Wrong kinase type.')
-        scored_phosprot = scored_phosprot.loc[:,kinases] # only for requested kinases if subset
 
-        # If scored phopshoproteome is linear values - converting it to log2 values
-        if not all_scored_phosprot.log2_values:
-            scored_phosprot = np.log2(scored_phosprot)
+        sorted_scores, sorted_columns = all_scored_phosprot.get_sorted_scores(kin_type)
+        col_indices = [sorted_columns.index(k) for k in kinases]
+        sorted_subset = sorted_scores[:, col_indices]
+        n_phosprot = sorted_subset.shape[0]
+        score_vals = score[kinases].values
 
         print('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
         logger.info('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
-        percent_output = scored_phosprot.progress_apply(lambda x: x.sort_values().searchsorted(score[x.name], side='right'))/len(scored_phosprot)*100
-        percent_output.index = score.index
+        result = np.empty_like(score_vals, dtype=float)
+        for j in range(sorted_subset.shape[1]):
+            result[:, j] = np.searchsorted(sorted_subset[:, j], score_vals[:, j], side='right')
+        percent_output = pd.DataFrame(result / n_phosprot * 100,
+                                      index=score.index, columns=kinases)
 
         percent_output = percent_output.round(round_digits)
         percent_rank_output = percent_output.rank(method='min', ascending=False, axis=1).astype(int)
