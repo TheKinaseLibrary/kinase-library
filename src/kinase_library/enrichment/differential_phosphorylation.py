@@ -291,13 +291,13 @@ class DiffPhosData(object):
             downreg_enrichment_data.submit_scores(data_type='bg', kin_type=kin_type, scores=unreg_sites_score, suppress_messages=True)
 
         elif kl_method in ['percentile','percentile_rank']:
-            scored_phosprot = core.ScoredPhosphoProteome(phosprot_name=_global_vars.phosprot_name)
             if not (hasattr(self.upreg_sites_pps, kin_type+'_percentiles') and
                     hasattr(self.downreg_sites_pps, kin_type+'_percentiles') and
                     hasattr(self.unreg_sites_pps, kin_type+'_percentiles') and
                     hasattr(self.upreg_sites_pps, kin_type+'_percentile_ranks') and
                     hasattr(self.downreg_sites_pps, kin_type+'_percentile_ranks') and
                     hasattr(self.unreg_sites_pps, kin_type+'_percentile_ranks')) or rescore:
+                scored_phosprot = core.ScoredPhosphoProteome(phosprot_name=_global_vars.phosprot_name)
                 print('\nCalculating percentiles for upregulated sites ({} substrates)'.format(len(self.upreg_sites_data)))
                 logger.info('Calculating percentiles for upregulated sites ({} substrates)'.format(len(self.upreg_sites_data)))
                 upreg_sites_percentile = self.upreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True, customized_scored_phosprot=scored_phosprot)
