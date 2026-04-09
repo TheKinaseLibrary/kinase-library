@@ -6,6 +6,7 @@
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
+from tqdm import tqdm
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data
@@ -453,7 +454,7 @@ class PhosphoProteomics(object):
         print('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
         logger.info('Calculating percentile for '+str(len(getattr(self,kin_type+'_substrates')))+' '+kin_type+' substrates')
         result = np.empty_like(score_vals, dtype=float)
-        for j in range(sorted_subset.shape[1]):
+        for j in tqdm(range(sorted_subset.shape[1]), desc='Percentile scoring'):
             result[:, j] = np.searchsorted(sorted_subset[:, j], score_vals[:, j], side='right')
         percent_output = pd.DataFrame(result / n_phosprot * 100,
                                       index=score.index, columns=kinases)
