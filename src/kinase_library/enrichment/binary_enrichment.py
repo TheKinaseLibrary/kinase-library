@@ -12,6 +12,7 @@ from statsmodels.stats import multitest
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
+from ..objects import core
 from ..objects import phosphoproteomics as pps
 
 #%%
@@ -277,21 +278,22 @@ class EnrichmentData(object):
                 print('Not all kinase scores were provided. Re-calculating scores for background data')
                 self.bg_pps.score(kin_type=kin_type,kinases=kinases)
         elif kl_method in ['percentile','percentile_rank']:
+            scored_phosprot = core.ScoredPhosphoProteome(phosprot_name=_global_vars.phosprot_name)
             if not hasattr(self.fg_pps, kin_type + '_' + data_att) or rescore:
                 print('\nCalculating percentiles for foreground data')
-                self.fg_pps.percentile(kin_type=kin_type,kinases=kinases)
+                self.fg_pps.percentile(kin_type=kin_type,kinases=kinases,customized_scored_phosprot=scored_phosprot)
                 self.phosprot_name = _global_vars.phosprot_name
             elif not set(kinases)<=set(getattr(self.fg_pps, kin_type + '_' + data_att)):
                 print('Not all kinase percentiles were provided. Re-calculating percentiles for foreground data')
-                self.fg_pps.percentile(kin_type=kin_type,kinases=kinases)
+                self.fg_pps.percentile(kin_type=kin_type,kinases=kinases,customized_scored_phosprot=scored_phosprot)
                 self.phosprot_name = _global_vars.phosprot_name
             if not hasattr(self.bg_pps, kin_type + '_' + data_att) or rescore:
                 print('\nCalculating percentiles for background data')
-                self.bg_pps.percentile(kin_type=kin_type,kinases=kinases)
+                self.bg_pps.percentile(kin_type=kin_type,kinases=kinases,customized_scored_phosprot=scored_phosprot)
                 self.phosprot_name = _global_vars.phosprot_name
             elif not set(kinases)<=set(getattr(self.bg_pps, kin_type + '_' + data_att)):
                 print('Not all kinase percentiles were provided. Re-calculating percentiles for background data')
-                self.bg_pps.percentile(kin_type=kin_type,kinases=kinases)
+                self.bg_pps.percentile(kin_type=kin_type,kinases=kinases,customized_scored_phosprot=scored_phosprot)
                 self.phosprot_name = _global_vars.phosprot_name
 
         fg_score_data = getattr(self.fg_pps, kin_type + '_' + data_att)

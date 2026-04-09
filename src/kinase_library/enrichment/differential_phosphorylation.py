@@ -12,6 +12,7 @@ import logging
 
 from ..utils import _global_vars, exceptions, utils
 from ..modules import data, enrichment
+from ..objects import core
 from ..objects import phosphoproteomics as pps
 from ..enrichment import binary_enrichment as be
 from ..logger import logger
@@ -296,15 +297,16 @@ class DiffPhosData(object):
                     hasattr(self.upreg_sites_pps, kin_type+'_percentile_ranks') and
                     hasattr(self.downreg_sites_pps, kin_type+'_percentile_ranks') and
                     hasattr(self.unreg_sites_pps, kin_type+'_percentile_ranks')) or rescore:
+                scored_phosprot = core.ScoredPhosphoProteome(phosprot_name=_global_vars.phosprot_name)
                 print('\nCalculating percentiles for upregulated sites ({} substrates)'.format(len(self.upreg_sites_data)))
                 logger.info('Calculating percentiles for upregulated sites ({} substrates)'.format(len(self.upreg_sites_data)))
-                upreg_sites_percentile = self.upreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True)
+                upreg_sites_percentile = self.upreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True, customized_scored_phosprot=scored_phosprot)
                 print('\nCalculating percentiles for downregulated sites ({} substrates)'.format(len(self.downreg_sites_data)))
                 logger.info('Calculating percentiles for downregulated sites ({} substrates)'.format(len(self.downreg_sites_data)))
-                downreg_sites_percentile = self.downreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True)
+                downreg_sites_percentile = self.downreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True, customized_scored_phosprot=scored_phosprot)
                 print('\nCalculating percentiles for background (unregulated) sites ({} substrates)'.format(len(self.unreg_sites_data)))
                 logger.info('Calculating percentiles for background (unregulated) sites ({} substrates)'.format(len(self.unreg_sites_data)))
-                unreg_sites_percentile = self.unreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True)
+                unreg_sites_percentile = self.unreg_sites_pps.percentile(kin_type=kin_type, kinases=kinases, non_canonical=non_canonical, values_only=True, customized_scored_phosprot=scored_phosprot)
                 self.phosprot_name = _global_vars.phosprot_name
             else:
                 upreg_sites_percentile = getattr(self.upreg_sites_pps, kin_type+'_percentiles')
