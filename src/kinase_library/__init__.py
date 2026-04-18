@@ -13,6 +13,7 @@ from .enrichment.mea import *
 
 from .utils import _global_vars
 from .utils.utils import *
+from .utils.matrix_processing import *
 
 from .modules.data import *
 from .modules.scoring import *
