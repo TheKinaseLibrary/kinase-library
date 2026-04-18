@@ -30,7 +30,13 @@ aa_all_ptm = ['P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q
 # Random amino acids
 ser_thr_random_aa = ['P','G','A','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E']
 tyrosine_random_aa = ['P','G','A','S','T','V','I','L','M','F','W','H','K','R','Q','N','D','E']
+ser_thr_tyr_random_aa = ['P','G','A','V','I','L','M','F','W','H','K','R','Q','N','D','E']
 random_aa_value = {'ser_thr': 1/17, 'tyr': 1/18, 'ser_thr_tyr': 1/16}
+random_aa_dict = {
+    'ser_thr': ser_thr_random_aa,
+    'tyr': tyrosine_random_aa,
+    'ser_thr_tyr': ser_thr_tyr_random_aa
+}
 
 # Positions
 ser_thr_pos = [-5,-4,-3,-2,-1,1,2,3,4]
@@ -43,6 +49,7 @@ kin_type_phos_acc = {'ser_thr': ['S','T','s','t'], 'tyrosine': ['Y','y']}
 valid_kin_types = {'ser_thr','tyrosine'}
 valid_phos_res = {'S','s','T','t','Y','y'}
 valid_mat_type = {'densitometry','raw','norm','log2'}
+valid_lib_types = {'ser_thr', 'tyr', 'ser_thr_tyr'}
 valid_mat_scale = {'linear','log'}
 valid_name_types = {'kinase','gene','matrix','uniprot_id'}
 valid_aa = {'P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E','s','t','y','X','x','-','_','*'}

@@ -39,6 +39,10 @@ def check_kin_list_type(kin_list, kin_type=None):
         if kin.upper() not in kin_type_list:
             raise Exception('All kinases must be the same type (\'{}\' is not a \'{}\' kinase).'.format(kin,kin_type))
 
+def check_lib_type(lib_type):
+    if lib_type not in _global_vars.valid_lib_types:
+        raise ValueError('lib_type must be one of the following: {}'.format(_global_vars.valid_lib_types))
+
 def check_mat_type(mat_type):
     if mat_type not in _global_vars.valid_mat_type:
         raise ValueError('mat_type must be one of the following: {}'.format(_global_vars.valid_mat_type))
