@@ -570,6 +570,91 @@ def get_kinome_info(kin_type=None, columns=None, info_file='./../databases/kinas
     return(all_kin_info)
 
 
+def update_kinome_info(rows, info_file='./../databases/kinase_data/kinome_information.tsv'):
+    """
+    Add or update rows in kinome_information.tsv.
+
+    For each row, if MATRIX_NAME already exists in the file the existing row
+    is replaced; otherwise the row is appended. Row order from the original
+    file is preserved for unchanged rows; new rows are inserted alphabetically
+    by MATRIX_NAME. Line endings (\\r\\n) and boolean format (TRUE/FALSE)
+    match the existing file convention.
+
+    Parameters
+    ----------
+    rows : pd.DataFrame or dict
+        If pd.DataFrame: one row per kinase, must contain MATRIX_NAME column.
+        If dict: mapping of {matrix_name: {column: value, ...}}.
+    info_file : str, optional
+        Path to information file. The default is the package's
+        kinome_information.tsv.
+
+    Returns
+    -------
+    None.
+    """
+    if not os.path.isfile(info_file):
+        current_dir = os.path.dirname(__file__)
+        info_file = os.path.join(current_dir, info_file)
+
+    if isinstance(rows, dict):
+        df_rows = pd.DataFrame.from_dict(rows, orient='index')
+        df_rows.index.name = 'MATRIX_NAME'
+        df_rows = df_rows.reset_index()
+    else:
+        df_rows = rows.copy()
+
+    if 'MATRIX_NAME' not in df_rows.columns:
+        raise ValueError('rows must contain a MATRIX_NAME column.')
+
+    # na_filter=False keeps every cell as a string so we don't accidentally
+    # rewrite the literal 'nan' entries some legacy rows have for missing PDB IDs
+    all_info = pd.read_csv(info_file, sep='\t', dtype=str, na_filter=False)
+
+    new_names = df_rows['MATRIX_NAME'].astype(str).tolist()
+    new_names_set = set(new_names)
+    existing_names = all_info['MATRIX_NAME'].astype(str).tolist()
+
+    # Replace existing rows in place to preserve original row order; append
+    # truly new rows at the end (callers may sort if they prefer)
+    name_to_row = {r['MATRIX_NAME']: r for _, r in df_rows.iterrows()}
+    kept_records = []
+    for _, existing_row in all_info.iterrows():
+        matrix_name = str(existing_row['MATRIX_NAME'])
+        if matrix_name in new_names_set:
+            # Replace with the new row (preserving column order from all_info)
+            new_row = name_to_row[matrix_name]
+            merged = {col: new_row.get(col, existing_row[col]) for col in all_info.columns}
+            kept_records.append(merged)
+        else:
+            kept_records.append(existing_row.to_dict())
+
+    # Append rows for kinases not previously in the file
+    truly_new = [n for n in new_names if n not in set(existing_names)]
+    for name in truly_new:
+        new_row = name_to_row[name]
+        merged = {col: new_row.get(col, '') for col in all_info.columns}
+        kept_records.append(merged)
+
+    out_df = pd.DataFrame(kept_records, columns=all_info.columns)
+
+    # Match the existing file format: TRUE/FALSE booleans and CRLF line endings
+    if 'DUAL_SPECIFICITY' in out_df.columns:
+        out_df['DUAL_SPECIFICITY'] = out_df['DUAL_SPECIFICITY'].apply(
+            lambda v: 'TRUE' if v in (True, 'TRUE', 'True', 'true') else
+                      ('FALSE' if v in (False, 'FALSE', 'False', 'false') else v)
+        )
+
+    # Write with CRLF to match the existing file convention. Strip the
+    # trailing line terminator that pandas adds, since the original file
+    # ends with the last row's line ending only.
+    text = out_df.to_csv(sep='\t', index=False, lineterminator='\r\n')
+    if text.endswith('\r\n'):
+        text = text[:-2]
+    with open(info_file, 'wb') as f:
+        f.write(text.encode('utf-8'))
+
+
 def get_kinase_info(kinase, name_type='matrix', info_file='./../databases/kinase_data/kinome_information.tsv'):
     """
     Get kinase information.
