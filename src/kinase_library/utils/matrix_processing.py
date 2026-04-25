@@ -240,11 +240,13 @@ def build_combined_matrices(kin_type, k_mod=False, round_digits=4):
     positions = _get_positions(kin_type)
     combined_matrix_columns = [str(x) + str(y) for x in positions for y in full_aa_labels]
 
-    densitometry_dir = os.path.join(mat_dir, 'densitometry')
+    # Enumerate from raw/ — that's the canonical source for the combined
+    # matrices (every kinase in the database has its raw matrix written there)
+    raw_dir = os.path.join(mat_dir, 'raw')
     all_kinases = np.sort([
-        '_'.join(name.split('.')[0].split('_')[:-1])
-        for name in os.listdir(densitometry_dir)
-        if not name.startswith(".")
+        name.split('.')[0]
+        for name in os.listdir(raw_dir)
+        if not name.startswith('.') and name.endswith('.tsv')
     ])
 
     full_matrix_raw = pd.DataFrame(index=all_kinases, columns=combined_matrix_columns)
@@ -422,48 +424,18 @@ def process_kinases(kin_type, lib_type, kinase_names=None, dual_spec=False,
     return results
 
 
-def save_matrices_to_database(processed_results, kin_type, round_digits=4,
-                              output_dir=None, rebuild_combined=True,
-                              update_phosphoproteome=False):
-    """
-    Save processed matrices to the database.
+_KINOME_INFO_COLUMNS = [
+    'MATRIX_NAME', 'KINASE', 'GENE_NAME', 'TYPE', 'SUBTYPE', 'FAMILY',
+    'UNIPROT_ID', 'UNIPROT_ENTRY_NAME', 'PDB_ID', 'KL_LIBRARY',
+    'DUAL_SPECIFICITY', 'DISPLAY_NAME'
+]
 
-    Writes individual raw, normalized, and log2 matrix files, optionally
-    rebuilds combined matrix files, and optionally updates the scored
-    phosphoproteomes.
 
-    Parameters
-    ----------
-    processed_results : dict
-        Dictionary mapping kinase names to result dicts (output of
-        process_kinase or process_kinases).
-    kin_type : str
-        Kinase type ('ser_thr' or 'tyrosine').
-    round_digits : int, optional
-        Number of decimal digits for rounding. The default is 4.
-    output_dir : str, optional
-        Custom output directory. If None, writes to the package's internal
-        database. The default is None.
-    rebuild_combined : bool, optional
-        Rebuild combined matrix files after saving. The default is True.
-    update_phosphoproteome : bool, optional
-        Update scored phosphoproteomes after saving. The default is False.
-
-    Returns
-    -------
-    None.
-    """
-    exceptions.check_kin_type(kin_type)
-
-    if output_dir is None:
-        current_dir = os.path.dirname(__file__)
-        base_dir = os.path.join(current_dir, _global_vars.mat_dir, kin_type)
-    else:
-        base_dir = output_dir
-
-    raw_dir = os.path.join(base_dir, 'raw')
-    norm_dir = os.path.join(base_dir, 'norm')
-    log2_dir = os.path.join(base_dir, 'log2')
+def _write_individual_matrices(processed_results, output_dir, round_digits):
+    """Write raw/norm/log2 TSV files for each kinase under output_dir."""
+    raw_dir = os.path.join(output_dir, 'raw')
+    norm_dir = os.path.join(output_dir, 'norm')
+    log2_dir = os.path.join(output_dir, 'log2')
 
     os.makedirs(raw_dir, exist_ok=True)
     os.makedirs(norm_dir, exist_ok=True)
@@ -480,62 +452,262 @@ def save_matrices_to_database(processed_results, kin_type, round_digits=4,
             os.path.join(log2_dir, kinase + '.tsv'), sep='\t'
         )
 
-    print(f'Saved {len(processed_results)} kinase matrices to {base_dir}')
+    print(f'Saved {len(processed_results)} kinase matrices to {output_dir}')
 
-    if rebuild_combined:
-        if output_dir is not None:
-            print('Skipping combined matrix rebuild (only supported for package database).')
+
+def _write_combined_matrices(kin_type, base_dir, round_digits):
+    """Rebuild and write the combined *_all_*.tsv files for the package database."""
+    print('Rebuilding combined matrices...')
+    combined = build_combined_matrices(kin_type, round_digits=round_digits)
+    combined['raw'].to_csv(
+        os.path.join(base_dir, kin_type + '_all_raw_matrices.tsv'),
+        header=True, index=True, sep='\t'
+    )
+    combined['norm'].to_csv(
+        os.path.join(base_dir, kin_type + '_all_norm_matrices.tsv'),
+        header=True, index=True, sep='\t'
+    )
+    combined['log2'].to_csv(
+        os.path.join(base_dir, kin_type + '_all_log2_matrices.tsv'),
+        header=True, index=True, sep='\t'
+    )
+    if kin_type == 'ser_thr':
+        combined['st_favorability'].to_csv(
+            os.path.join(base_dir, 'st_favorability.tsv'),
+            header=True, index=True, sep='\t'
+        )
+    print('Combined matrices saved.')
+
+
+def _confirm(message):
+    """Prompt y/n. Returns True on yes, False on no."""
+    while True:
+        ans = input(f'{message} (y/n): ').strip().lower()
+        if ans in ('y', 'yes'):
+            return True
+        if ans in ('n', 'no'):
+            return False
+        print("Please enter 'y' or 'n'.")
+
+
+def _kinase_already_in_kinome_info(name):
+    """Return True if the kinase has a row in kinome_information.tsv."""
+    try:
+        all_info = data.get_kinome_info()
+        return name in all_info['MATRIX_NAME'].astype(str).tolist()
+    except Exception:
+        return False
+
+
+def _prompt_field(label, default=None):
+    """Prompt for a field; pressing enter accepts the default if given."""
+    if default is not None:
+        prompt = f'  {label} [{default}]: '
+    else:
+        prompt = f'  {label}: '
+    val = input(prompt).strip()
+    if val == '' and default is not None:
+        return default
+    return val
+
+
+def _prompt_kinome_info_for_kinase(name, kin_type, lib_type, dual_spec, family=None):
+    """
+    Prompt the user for kinome_information columns for a single kinase.
+
+    Returns a dict of column->value, or None if the user declined to update
+    an existing row.
+    """
+    if _kinase_already_in_kinome_info(name):
+        if not _confirm(f"Kinase '{name}' already exists in kinome_information.tsv. Update its row?"):
+            return None
+
+    print(f"Filling kinome_information.tsv row for '{name}':")
+
+    kinase_val = _prompt_field('KINASE', default=name)
+    gene_val = _prompt_field('GENE_NAME', default=name)
+    subtype_val = _prompt_field('SUBTYPE (e.g. STK, RTK, ncTK)')
+    family_val = _prompt_field('FAMILY', default=family) if family else _prompt_field('FAMILY')
+    uniprot_id = _prompt_field('UNIPROT_ID')
+    uniprot_entry = _prompt_field('UNIPROT_ENTRY_NAME')
+    pdb_id = _prompt_field('PDB_ID (optional, blank to skip)', default='')
+    display_name = _prompt_field('DISPLAY_NAME', default=name)
+
+    return {
+        'MATRIX_NAME': name,
+        'KINASE': kinase_val,
+        'GENE_NAME': gene_val,
+        'TYPE': kin_type,
+        'SUBTYPE': subtype_val,
+        'FAMILY': family_val,
+        'UNIPROT_ID': uniprot_id,
+        'UNIPROT_ENTRY_NAME': uniprot_entry,
+        'PDB_ID': pdb_id,
+        'KL_LIBRARY': lib_type,
+        'DUAL_SPECIFICITY': bool(dual_spec),
+        'DISPLAY_NAME': display_name,
+    }
+
+
+def _resolve_kinome_info_rows(kinome_info, kinase_metadata, confirm):
+    """
+    Resolve the kinome_info rows to apply.
+
+    Parameters
+    ----------
+    kinome_info : str, pd.DataFrame, dict, or None
+        - str: path to a TSV/CSV file with one row per kinase
+        - pd.DataFrame: rows already prepared
+        - dict: {matrix_name: {column: value, ...}}
+        - None: prompt interactively (requires confirm=True)
+    kinase_metadata : dict
+        {name: (kin_type, lib_type, dual_spec, family)} for each kinase being saved.
+    confirm : bool
+        If False and kinome_info is None, raise an error.
+
+    Returns
+    -------
+    pd.DataFrame or None
+        DataFrame ready for data.update_kinome_info, or None if the user
+        declined all updates.
+    """
+    if kinome_info is None:
+        if not confirm:
+            raise ValueError(
+                'kinome_info must be provided when confirm=False and '
+                'update_database=True (no interactive prompts available).'
+            )
+        rows = []
+        for name, (kin_type, lib_type, dual_spec, family) in kinase_metadata.items():
+            row = _prompt_kinome_info_for_kinase(name, kin_type, lib_type, dual_spec, family)
+            if row is not None:
+                rows.append(row)
+        if not rows:
+            return None
+        return pd.DataFrame(rows)
+
+    if isinstance(kinome_info, str):
+        sep = '\t' if kinome_info.endswith('.tsv') else ','
+        return pd.read_csv(kinome_info, sep=sep)
+    if isinstance(kinome_info, dict):
+        df = pd.DataFrame.from_dict(kinome_info, orient='index')
+        df.index.name = 'MATRIX_NAME'
+        return df.reset_index()
+    if isinstance(kinome_info, pd.DataFrame):
+        return kinome_info.copy()
+    raise TypeError(f'Unsupported type for kinome_info: {type(kinome_info)}')
+
+
+def save_matrices(processed_results, kin_type, output_dir=None,
+                  update_database=False, confirm=True, kinome_info=None,
+                  kinase_metadata=None, round_digits=4):
+    """
+    Save processed matrices to a directory and/or update the package database.
+
+    Two independent save targets:
+      * `output_dir`  - write matrices to this directory only
+      * `update_database` - perform full package update (matrices + combined +
+        kinome_information.tsv + phosphoproteomes), with confirmation prompt
+
+    Both can be set in the same call.
+
+    Parameters
+    ----------
+    processed_results : dict
+        {kinase_name: result_dict} from process_kinase / process_kinases.
+    kin_type : str
+        Kinase type ('ser_thr' or 'tyrosine').
+    output_dir : str, optional
+        Directory to write matrices to. The default is None.
+    update_database : bool, optional
+        If True, perform the full package update. The default is False.
+    confirm : bool, optional
+        If True, prompt before updating the package database. The default is True.
+    kinome_info : str, dict, or pd.DataFrame, optional
+        Path to a TSV/CSV file, dict, or DataFrame with kinome_information rows
+        for the kinases being saved. Only used when update_database is True.
+        If None and confirm=True, fields are prompted interactively. If None and
+        confirm=False, an error is raised. The default is None.
+    kinase_metadata : dict, optional
+        {name: (kin_type, lib_type, dual_spec, family)} for each kinase. Used
+        to drive the kinome_info prompts. Defaults inferred from kin_type and
+        ('ser_thr', False, None) if not provided.
+    round_digits : int, optional
+        Number of decimal digits for rounding. The default is 4.
+
+    Returns
+    -------
+    None.
+    """
+    exceptions.check_kin_type(kin_type)
+
+    if not output_dir and not update_database:
+        print('Nothing to do. Pass output_dir or update_database=True.')
+        return
+
+    # Path-only save (independent of update_database)
+    if output_dir:
+        _write_individual_matrices(processed_results, output_dir, round_digits)
+
+    if not update_database:
+        return
+
+    # Confirmation prompt for the package update
+    if confirm:
+        names = list(processed_results.keys())
+        if len(names) <= 5:
+            label = ', '.join(f"'{n}'" for n in names)
         else:
-            print('Rebuilding combined matrices...')
-            combined = build_combined_matrices(kin_type, round_digits=round_digits)
-            combined['raw'].to_csv(
-                os.path.join(base_dir, kin_type + '_all_raw_matrices.tsv'),
-                header=True, index=True, sep='\t'
+            label = f"{len(names)} kinases ({', '.join(names[:3])}, ...)"
+        if not _confirm(f'Update package database with {label}?'):
+            print('Database update cancelled.')
+            return
+
+    # Resolve kinome_info rows BEFORE writing anything to the database
+    if kinase_metadata is None:
+        kinase_metadata = {n: (kin_type, kin_type, False, None) for n in processed_results}
+    kinome_rows = _resolve_kinome_info_rows(kinome_info, kinase_metadata, confirm)
+
+    # Write to package
+    current_dir = os.path.dirname(__file__)
+    base_dir = os.path.join(current_dir, _global_vars.mat_dir, kin_type)
+    _write_individual_matrices(processed_results, base_dir, round_digits)
+
+    # Save densitometry source files to the package, where available, so the
+    # kinase can be re-processed in the future from the package alone.
+    densitometry_dir = os.path.join(base_dir, 'densitometry')
+    os.makedirs(densitometry_dir, exist_ok=True)
+    for kinase, result in processed_results.items():
+        if 'densitometry' in result and result['densitometry'] is not None:
+            result['densitometry'].to_csv(
+                os.path.join(densitometry_dir, kinase + '_densitometry.txt'),
+                sep='\t', header=True, index=True
             )
-            combined['norm'].to_csv(
-                os.path.join(base_dir, kin_type + '_all_norm_matrices.tsv'),
-                header=True, index=True, sep='\t'
-            )
-            combined['log2'].to_csv(
-                os.path.join(base_dir, kin_type + '_all_log2_matrices.tsv'),
-                header=True, index=True, sep='\t'
-            )
-            if kin_type == 'ser_thr':
-                combined['st_favorability'].to_csv(
-                    os.path.join(base_dir, 'st_favorability.tsv'),
-                    header=True, index=True, sep='\t'
-                )
-            print('Combined matrices saved.')
 
-    if update_phosphoproteome:
-        print('Updating scored phosphoproteomes...')
-        data.update_scored_phosphoproteome()
+    _write_combined_matrices(kin_type, base_dir, round_digits)
 
-    _print_database_update_reminder(update_phosphoproteome=update_phosphoproteome)
+    if kinome_rows is not None and len(kinome_rows) > 0:
+        print('Updating kinome_information.tsv...')
+        data.update_kinome_info(kinome_rows)
+
+    print('Updating scored phosphoproteomes...')
+    data.update_scored_phosphoproteome()
+
+    _print_database_update_reminder()
 
 
-def _print_database_update_reminder(update_phosphoproteome=False):
-    """
-    Print a prominent reminder of manual steps after updating the database.
-    """
+def _print_database_update_reminder():
+    """Print a prominent reminder of remaining manual steps."""
     banner = '#' * 70
     lines = [
         '',
         banner,
         '# REMEMBER: manual steps to complete the database update'.ljust(69) + '#',
         banner,
-    ]
-    step = 1
-    if not update_phosphoproteome:
-        lines.append(f'# {step}. Update scored phosphoproteome:'.ljust(69) + '#')
-        lines.append('#    >>> kl.update_scored_phosphoproteome()'.ljust(69) + '#')
-        step += 1
-    lines += [
-        f'# {step}. Update databases/kinase_data/kinome_information.tsv'.ljust(69) + '#',
-        f'# {step + 1}. Update test files in src/tests/ (if applicable)'.ljust(69) + '#',
-        f'# {step + 2}. Update CHANGELOG.md'.ljust(69) + '#',
-        f'# {step + 3}. Update README.md (kinase counts, new features)'.ljust(69) + '#',
-        f'# {step + 4}. Bump __version__ in src/kinase_library/__init__.py'.ljust(69) + '#',
+        '# 1. Update CHANGELOG.md'.ljust(69) + '#',
+        '# 2. Update README.md (kinase counts, new features)'.ljust(69) + '#',
+        '# 3. Bump __version__ in src/kinase_library/__init__.py'.ljust(69) + '#',
+        '# 4. Update test files in src/tests/ (if applicable)'.ljust(69) + '#',
         banner,
         '',
     ]
@@ -549,20 +721,42 @@ def _print_database_update_reminder(update_phosphoproteome=False):
 ############################
 """
 
+def _kinase_to_results_dict(kinase_obj):
+    """Build a processed_results-style dict from a Kinase object's attributes."""
+    if not hasattr(kinase_obj, 'raw_matrix'):
+        raise AttributeError(
+            'Kinase object has no raw_matrix attribute. '
+            'Use kinase_from_densitometry() to create a savable Kinase object.'
+        )
+
+    # Matrices are saved with positions as rows and amino acids as columns
+    # (transpose back from Kinase convention of amino acids as rows)
+    result = {
+        'raw': kinase_obj.raw_matrix.transpose(),
+        'norm': kinase_obj.norm_matrix.transpose(),
+        'log2': kinase_obj.log2_matrix.transpose(),
+    }
+    if kinase_obj.kin_type == 'ser_thr' and hasattr(kinase_obj, 'st_fav_series'):
+        result['st_favorability'] = kinase_obj.st_fav_series
+    if hasattr(kinase_obj, '_densitometry'):
+        result['densitometry'] = kinase_obj._densitometry
+
+    return {kinase_obj.name: result}
+
+
 def kinase_from_densitometry(densitometry, name, kin_type, lib_type,
                              dual_spec=False, k_mod=False,
                              family='undefined', round_digits=4,
-                             update_database=False,
-                             rebuild_combined=True,
-                             update_phosphoproteome=False):
+                             output_dir=None, update_database=False,
+                             confirm=True, kinome_info=None):
     """
     Read a densitometry matrix into a kl.Kinase object.
 
     Processes the densitometry through the full pipeline (raw, norm, log2)
     and returns a kl.Kinase object with all standard attributes and methods
     (plot_data, seq_logo, heatmap, score, percentile, etc.). The raw matrix
-    is attached as an extra attribute, and a save_to_database() method is
-    bound to the instance for optional persistence.
+    is attached as an extra attribute, and a save() method is bound to the
+    instance for optional persistence.
 
     Parameters
     ----------
@@ -582,26 +776,33 @@ def kinase_from_densitometry(densitometry, name, kin_type, lib_type,
         Kinase family. The default is 'undefined'.
     round_digits : int, optional
         Number of decimal digits for rounding. The default is 4.
+    output_dir : str, optional
+        Save matrices to this directory. The default is None (no save).
     update_database : bool, optional
-        If True, save the processed matrices to the package database
-        immediately after creation. The default is False.
-    rebuild_combined : bool, optional
-        When update_database is True, rebuild combined matrix files.
-        The default is True.
-    update_phosphoproteome : bool, optional
-        When update_database is True, re-score phosphoproteomes.
-        The default is False.
+        If True, perform the full package update. The default is False.
+    confirm : bool, optional
+        If True, prompt before updating the package database. The default is True.
+    kinome_info : str, dict, or pd.DataFrame, optional
+        Pre-built kinome_information row(s). Only used when update_database is
+        True. If None and confirm=True, fields are prompted interactively.
 
     Returns
     -------
     kin : kl.Kinase
-        Kinase object with raw_matrix attached and save_to_database() bound.
+        Kinase object with raw_matrix attached and save() bound.
     """
     exceptions.check_kin_type(kin_type)
     exceptions.check_lib_type(lib_type)
 
+    # Resolve densitometry to a DataFrame so we can stash it on the Kinase
+    # for later persistence to the package's densitometry/ folder.
+    if isinstance(densitometry, str):
+        densitometry_df = pd.read_csv(densitometry, sep='\t', index_col=0)
+    else:
+        densitometry_df = densitometry.copy()
+
     result = process_kinase(
-        densitometry, kinase_name=name, kin_type=kin_type, lib_type=lib_type,
+        densitometry_df, kinase_name=name, kin_type=kin_type, lib_type=lib_type,
         dual_spec=dual_spec, k_mod=k_mod, round_digits=round_digits
     )
 
@@ -628,76 +829,123 @@ def kinase_from_densitometry(densitometry, name, kin_type, lib_type,
     if kin_type == 'ser_thr':
         kin.st_fav_series = result['st_favorability']
 
-    # Store processing context for later re-save
+    # Store processing context for later save
+    kin._densitometry = densitometry_df
     kin._lib_type = lib_type
     kin._dual_spec = dual_spec
     kin._round_digits = round_digits
 
-    # Bind save_to_database method to the instance
-    def save_to_database(self, rebuild_combined=True, update_phosphoproteome=False,
-                         output_dir=None):
-        save_kinase_to_database(
-            self, rebuild_combined=rebuild_combined,
-            update_phosphoproteome=update_phosphoproteome,
-            output_dir=output_dir, round_digits=self._round_digits
+    # Bind unified save method to the instance
+    def save(self, output_dir=None, update_database=False, confirm=True,
+             kinome_info=None):
+        save_matrices(
+            _kinase_to_results_dict(self),
+            kin_type=self.kin_type,
+            output_dir=output_dir,
+            update_database=update_database,
+            confirm=confirm,
+            kinome_info=kinome_info,
+            kinase_metadata={self.name: (self.kin_type, self._lib_type,
+                                         self._dual_spec, self.family)},
+            round_digits=self._round_digits,
         )
-    kin.save_to_database = types.MethodType(save_to_database, kin)
 
-    if update_database:
-        kin.save_to_database(
-            rebuild_combined=rebuild_combined,
-            update_phosphoproteome=update_phosphoproteome
-        )
+    kin.save = types.MethodType(save, kin)
+
+    # If save flags were passed at creation, run the save now
+    if output_dir is not None or update_database:
+        kin.save(output_dir=output_dir, update_database=update_database,
+                 confirm=confirm, kinome_info=kinome_info)
 
     return kin
 
 
-def save_kinase_to_database(kinase_obj, rebuild_combined=True,
-                            update_phosphoproteome=False,
-                            output_dir=None, round_digits=4):
+def kinases_from_densitometry_dir(densitometry_dir, kin_type, lib_type,
+                                  kinase_names=None, dual_spec=False,
+                                  k_mod=False, family='undefined',
+                                  round_digits=4, output_dir=None,
+                                  update_database=False, confirm=True,
+                                  kinome_info=None):
     """
-    Save a Kinase object's matrices to the package database.
+    Process all densitometry files in a directory into kl.Kinase objects.
+
+    Mirrors the original matrix_processing.py command-line behavior.
 
     Parameters
     ----------
-    kinase_obj : kl.Kinase
-        Kinase object (must have raw_matrix attribute, as created by
-        kinase_from_densitometry).
-    rebuild_combined : bool, optional
-        Rebuild combined matrix files after saving. The default is True.
-    update_phosphoproteome : bool, optional
-        Re-score phosphoproteomes after saving. The default is False.
+    densitometry_dir : str
+        Directory containing `{KINASE}_densitometry.txt` files.
+    kin_type : str
+        Kinase type ('ser_thr' or 'tyrosine').
+    lib_type : str
+        Library type ('ser_thr', 'tyr', or 'ser_thr_tyr').
+    kinase_names : list, optional
+        Specific kinases to process. The default is None (all files in the dir).
+    dual_spec, k_mod, family, round_digits : see process_kinases.
     output_dir : str, optional
-        Custom output directory. If None, writes to the package database.
-        The default is None.
-    round_digits : int, optional
-        Number of decimal digits for rounding. The default is 4.
+        Save matrices to this directory. The default is None.
+    update_database : bool, optional
+        Perform full package update. The default is False.
+    confirm : bool, optional
+        Prompt before updating the package database. The default is True.
+    kinome_info : str, dict, or pd.DataFrame, optional
+        Pre-built kinome_information rows for all kinases. Required when
+        update_database=True and confirm=False.
 
     Returns
     -------
-    None.
+    kinases : dict
+        {kinase_name: kl.Kinase} dictionary.
     """
-    if not hasattr(kinase_obj, 'raw_matrix'):
-        raise AttributeError(
-            'Kinase object has no raw_matrix attribute. '
-            'Use kinase_from_densitometry() to create a savable Kinase object.'
+    exceptions.check_kin_type(kin_type)
+    exceptions.check_lib_type(lib_type)
+
+    if not densitometry_dir.endswith('/'):
+        densitometry_dir = densitometry_dir + '/'
+
+    available = [
+        '_'.join(name.split('.')[0].split('_')[:-1])
+        for name in os.listdir(densitometry_dir)
+        if not name.startswith('.')
+    ]
+
+    if kinase_names is None:
+        kinase_names = sorted(available)
+
+    print(f'Processing {len(kinase_names)} kinase(s) from {densitometry_dir}')
+    kinases = {}
+    for kinase in tqdm(kinase_names):
+        if kinase not in available:
+            print(f"ERROR: kinase '{kinase}' not found in {densitometry_dir}")
+            continue
+        kinase_file = [
+            x for x in os.listdir(densitometry_dir)
+            if '_'.join(x.split('.')[0].split('_')[:-1]) == kinase
+        ][0]
+        kinases[kinase] = kinase_from_densitometry(
+            densitometry_dir + kinase_file,
+            name=kinase, kin_type=kin_type, lib_type=lib_type,
+            dual_spec=dual_spec, k_mod=k_mod, family=family,
+            round_digits=round_digits,
+            # don't save individually — we'll save the batch below
         )
 
-    # Matrices are saved with positions as rows and amino acids as columns
-    # (transpose back from Kinase convention)
-    result = {
-        'raw': kinase_obj.raw_matrix.transpose(),
-        'norm': kinase_obj.norm_matrix.transpose(),
-        'log2': kinase_obj.log2_matrix.transpose(),
-    }
-    if kinase_obj.kin_type == 'ser_thr' and hasattr(kinase_obj, 'st_fav_series'):
-        result['st_favorability'] = kinase_obj.st_fav_series
+    if output_dir is None and not update_database:
+        return kinases
 
-    save_matrices_to_database(
-        {kinase_obj.name: result},
-        kin_type=kinase_obj.kin_type,
-        round_digits=round_digits,
-        output_dir=output_dir,
-        rebuild_combined=rebuild_combined,
-        update_phosphoproteome=update_phosphoproteome
+    # Build processed_results dict and run a single batch save (one combined
+    # rebuild, one phosphoproteome update at the end)
+    processed_results = {}
+    kinase_metadata = {}
+    for name, kin in kinases.items():
+        processed_results[name] = _kinase_to_results_dict(kin)[name]
+        kinase_metadata[name] = (kin.kin_type, kin._lib_type, kin._dual_spec, kin.family)
+
+    save_matrices(
+        processed_results, kin_type=kin_type,
+        output_dir=output_dir, update_database=update_database,
+        confirm=confirm, kinome_info=kinome_info,
+        kinase_metadata=kinase_metadata, round_digits=round_digits
     )
+
+    return kinases
