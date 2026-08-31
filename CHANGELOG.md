@@ -6,6 +6,10 @@ Added
 
 - New feature for generating kinome tree using same logic as website. Original kinome tree SVG sourced from [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/)
 
+Fixed
+
+- Bubble-map colorbar titles can now be customized so MEA NES values can be labeled accurately
+
 ## [1.5.0] - 2025-06-27
 
 Added

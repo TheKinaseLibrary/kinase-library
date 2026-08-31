@@ -1,5 +1,8 @@
-import pytest
 import os
+
+import pytest
+
+os.environ.setdefault("MPLBACKEND", "Agg")
 
 
 @pytest.fixture(scope="session")
