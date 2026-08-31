@@ -698,7 +698,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
                    num_panels=6, vertical=True, constrained_layout=True,
                    xaxis_label='Condition', yaxis_label='Kinase',
                    xlabel=True, xlabels_size=8, ylabel=True, ylabels_size=10,
-                   font_family=None, lff_cbar_title='log2(FF)'):
+                   font_family=None, lff_cbar_title='log2(FF)',
+                   pval_legend_title='Adj. p-value'):
     """
     Display a bubblemap with enrichment statistics encoded by color and p-values encoded by bubble size.
 
@@ -790,6 +791,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         Customized font family for the figures. The default is None.
     lff_cbar_title : str, optional
         Title for the enrichment-statistic colorbar. The default is 'log2(FF)'.
+    pval_legend_title : str, optional
+        Title for the bubble-size p-value legend. The default is 'Adj. p-value'.
 
     Raises
     ------
@@ -1042,7 +1045,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             handles[i].set_markerfacecolor('white')
             handles[i].set_alpha(1)
         axes[1].legend(handles=handles, labels=[str(10**-x) for x in size_legend_data['sizes'][:3]] + ['<'+str(10**int(-(size_legend_data['sizes'][3])))],
-                       title='Adj. p-value', loc='center', labelspacing=pval_legend_spacing, facecolor='white')
+                       title=pval_legend_title, loc='center', labelspacing=pval_legend_spacing, facecolor='white')
     axes[1].axis('off')
 
     if lff_cbar:
