@@ -9,6 +9,7 @@ Added
 Fixed
 
 - Bubble-map colorbar titles can now be customized so MEA NES values can be labeled accurately
+- MEA result combination now selects the native `p-value` column for unadjusted p-values while supporting the legacy `pvalue` spelling
 
 ## [1.5.0] - 2025-06-27
 

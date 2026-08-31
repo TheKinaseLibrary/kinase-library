@@ -311,9 +311,10 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
     lff_col_name : str, optional
         Enrichment statistic column name. The default is 'NES'.
     pval_col_name : str, optional
-        P-value column name. If None, selection is controlled by adj_pval. The default is None.
+        P-value column name. If None, use 'FDR' when adj_pval is True. When adj_pval is False, prefer the native
+        MEA column 'p-value' and fall back to the legacy spelling 'pvalue' when needed. The default is None.
     adj_pval : bool, optional
-        If pval_col_name is None, use 'FDR' when True and 'pvalue' when False. The default is True.
+        Controls the default p-value column when pval_col_name is None. The default is True.
 
     Raises
     ------
@@ -344,18 +345,23 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
         raise ValueError('All enrichment results must have the same kinases enriched.')
     kinases = enrichment_results_tables[0].index.to_list()
 
-    if pval_col_name is None:
-        if adj_pval:
-            pval_col_name = 'FDR'
-        else:
-            pval_col_name = 'pvalue'
-
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
 
     for res,cond in zip(enrichment_results_tables,conds_list):
+        if pval_col_name is not None:
+            res_pval_col_name = pval_col_name
+        elif adj_pval:
+            res_pval_col_name = 'FDR'
+        elif 'p-value' in res.columns:
+            res_pval_col_name = 'p-value'
+        elif 'pvalue' in res.columns:
+            res_pval_col_name = 'pvalue'
+        else:
+            res_pval_col_name = 'p-value'
+
         lff_data[cond] = res[lff_col_name]
-        pval_data[cond] = res[pval_col_name]
+        pval_data[cond] = res[res_pval_col_name]
 
     return(lff_data,pval_data)
 
