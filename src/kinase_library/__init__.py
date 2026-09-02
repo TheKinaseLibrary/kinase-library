@@ -16,6 +16,7 @@ from .utils.utils import *
 from .utils.matrix_processing import *
 
 from .modules.data import *
+from .modules.sequences import *
 from .modules.scoring import *
 from .modules.enrichment import *
 
@@ -25,7 +26,7 @@ tqdm.pandas(file=tqdm_out, ascii=False)
 
 #%%
 
-__version__ = "1.7.1"
+__version__ = "1.8.0"
 
 #%% Loading scored phosphoproteome one time per session
 
