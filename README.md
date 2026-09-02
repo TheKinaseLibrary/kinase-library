@@ -23,6 +23,7 @@
 
 ## Features
 
+* **Sequence Retrieval**: Build the `SITE_+/-7_AA` window from a protein identifier and a site position, for datasets that arrive without a sequence column.
 * **Kinase Prediction**: Predict potential kinases responsible for phosphorylation sites using a built-in kinase-substrate prediction algorithm.
 * **Enrichment Analysis**: Perform kinase enrichment analysis using binary enrichment or differential phosphorylation analysis.
 * **Motif Enrichment Analysis (MEA)**: Identify kinases potentially regulated in your dataset using MEA with the GSEA algorithm.
