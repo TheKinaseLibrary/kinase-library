@@ -4,6 +4,8 @@
 ####################################
 """
 
+import os
+
 # Matrices
 _default_mat_dir = './../databases/matrices'
 def reset_mat_dir():
@@ -21,6 +23,31 @@ phosprot_file_type = ['parquet','txt','tsv','csv','xls','xlsx']
 phosprot_path='./../databases/substrates'
 phosprot_info_columns = {'date_added': 'Date added (yyyy-mm-dd)', 'date_updated': 'Date updated (yyyy-mm-dd)', 'name': 'Name', 'description': 'Description', 'ser_thr_sites': 'Ser-Thr sites', 'tyrosine_sites': 'Tyr sites'}
 # global all_scored_phosprot
+
+# Reference proteomes
+# The UniProt FASTA files are NOT bundled with the package - they are hundreds of
+# megabytes and the package already ships 97 MB of databases. The directory
+# holding them is a session setting: the KL_PROTEOME_DIR environment variable,
+# kl.set_current_proteome_dir(), or the ref_prot_file argument for a one-off.
+proteome_dir_env_var = 'KL_PROTEOME_DIR'
+_legacy_proteome_dir = '/Users/tomer/My Drive/PhD/Thesis/Kinome/packages/py_kinase_library/src/py_kinase_library/databases/uniprot_sequences'
+def reset_proteome_dir():
+    global proteome_dir
+    proteome_dir = os.environ.get(proteome_dir_env_var, _legacy_proteome_dir)
+reset_proteome_dir()
+default_species = 'human'
+# Candidate file names per species, in preference order: a current download
+# first, then the July-2021 file that shipped with the legacy package.
+proteome_files = {
+    'human': ['human_uniprot_proteome_with_isoforms.fasta', 'human_uniprot_proteome_with_isoforms_07_2021.fasta'],
+    'mouse': ['mouse_uniprot_proteome_with_isoforms.fasta', 'mouse_uniprot_proteome_with_isoforms_07_2021.fasta'],
+    'rat': ['rat_uniprot_proteome_with_isoforms.fasta', 'rat_uniprot_proteome_with_isoforms_07_2021.fasta'],
+    'all': ['uniprot_isoforms_all_species.fasta', 'uniprot_isoforms_all_species_07_2021.fasta'],
+}
+# UniProt reference proteome identifiers, used by download_proteome. 'all' has
+# no single proteome ID and is therefore not downloadable.
+uniprot_proteome_ids = {'human': 'UP000005640', 'mouse': 'UP000000589', 'rat': 'UP000002494'}
+site_window_column = 'SITE_+/-7_AA'
 
 # Amino acids
 aa_unmod = ['P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q','N','D','E']
@@ -56,6 +83,8 @@ valid_aa = {'P','G','A','C','S','T','V','I','L','M','F','Y','W','H','K','R','Q',
 valid_score_output_type = {'series','list','dict'}
 valid_output_sort_by = {'input','name','value','score','percentile'}
 valid_labels_category = {'display', 'matrix', 'protein', 'gene'}
+valid_species = {'human','mouse','rat','all'}
+valid_id_format = {'uniprot_acc','gene_symbol','protein_name'}
 
 # Valid scoring and enrichment parameters
 valid_scoring_metric = {'score','percentile'}

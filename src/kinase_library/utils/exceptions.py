@@ -155,3 +155,16 @@ def check_cluster_method(cluster_by):
 def check_labels_type(kins_label_type):
     if kins_label_type not in _global_vars.valid_labels_category:
         raise ValueError('kins_label_type must be one of the following: {}'.format(_global_vars.valid_labels_category))
+
+#%%
+"""
+Sequence retrieval
+"""
+
+def check_species(species):
+    if species not in _global_vars.valid_species:
+        raise ValueError('species must be one of the following: {}'.format(_global_vars.valid_species))
+
+def check_id_format(id_format):
+    if id_format not in _global_vars.valid_id_format:
+        raise ValueError('id_format must be one of the following: {}'.format(_global_vars.valid_id_format))
