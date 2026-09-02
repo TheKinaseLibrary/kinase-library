@@ -70,3 +70,13 @@ def enrichment_background_tyrosine_input_path(dirname):
 @pytest.fixture(scope="session")
 def enrichment_tyrosine_output_path(dirname):
     return os.path.join(dirname, "data/outputs/enrichment_tyrosine_output.csv")
+
+
+@pytest.fixture(scope="session")
+def windows_fixture_path(dirname):
+    return os.path.join(dirname, "data/inputs/windows_fixture.tsv")
+
+
+@pytest.fixture(scope="session")
+def test_proteome_path(dirname):
+    return os.path.join(dirname, "data/inputs/uniprot_test_proteome.fasta")
