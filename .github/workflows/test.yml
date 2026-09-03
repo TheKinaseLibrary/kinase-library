@@ -30,6 +30,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov
           if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
+          # Install the package itself. Without this, pytest can still import
+          # kinase_library in-process (the empty src/tests/__init__.py makes
+          # pytest prepend src/ to sys.path), but a subprocess started by a test
+          # cannot -- sys.path is not inherited. That is what breaks
+          # test_cli_runs_as_a_python_module, which shells out to
+          # `python -m kinase_library.modules.sequences`.
+          python -m pip install -e .
       - name: Test with pytest
         run: |
           pytest -vv src/tests

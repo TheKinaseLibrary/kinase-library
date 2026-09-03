@@ -5,6 +5,19 @@
 Added
 
 - New feature for generating kinome tree using same logic as website. Original kinome tree SVG sourced from [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/)
+- `retrieve_sequences`: build the `SITE_+/-7_AA` window from a protein identifier plus a site position, against a local UniProt proteome. Accepts a UniProt accession (isoform suffixes included), a gene symbol, or an entry name, and reports every site it could not resolve with the reason why. Returns to the package after being dropped in v1.0.0; legacy argument spellings still work with a deprecation warning
+- `load_proteome` and `parse_position`, the two pieces of `retrieve_sequences` worth calling on their own
+- `get_current_proteome_dir`, `set_current_proteome_dir` and `reset_current_proteome_dir` to point the package at the UniProt FASTA files, which are not bundled. Also read from the `KL_PROTEOME_DIR` environment variable
+- `download_proteome` to fetch a current human, mouse or rat reference proteome from UniProt, with a sidecar file recording which UniProt release it came from
+- A command line entry point: `python -m kinase_library.modules.sequences TABLE --protein-col NAME --pos-col NAME`
+
+Changed
+
+- Removed the unrelated `Bio` package from the requirements. `biopython` is the real dependency, and it is now actually used
+
+Fixed
+
+- `requires-python` was `>=3.10, <=3.13`, which under PEP 440 excludes Python 3.13.1 and every later 3.13 patch release, so `pip install kinase-library` refused to install on an up-to-date Python 3.13. It is now `>=3.10, <3.14`
 
 ## [1.5.0] - 2025-06-27
 

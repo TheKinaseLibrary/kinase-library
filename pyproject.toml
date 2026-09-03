@@ -11,7 +11,7 @@ authors = [
     { name = "sean-landry", email = "sean.landry@cellsignal.com" },
 ]
 description = "The Kinase Library Project: a Global Atlas of the Human Protein Kinome"
-requires-python = ">=3.10, <=3.13"
+requires-python = ">=3.10, <3.14"
 keywords = [
     "kinase",
     "phosphorylation",
@@ -51,3 +51,8 @@ exclude = ["tests", "notebooks"]
 addopts = """
 --cov-report term-missing \
 --cov src/kinase_library -ra"""
+markers = [
+  "logic: behaviour across cases and configurations, including invariants",
+  "edge: weird-but-handled data with a defined outcome, never an uncaught exception",
+  "expected_failure: input that must fail, verified against the four-part failure contract",
+]

@@ -532,6 +532,72 @@ def reset_current_mat_dir():
     _global_vars.reset_mat_dir()
     print(f'Matrices directory was reset to: {_global_vars.mat_dir}')
 
+
+def get_current_proteome_dir():
+    """
+    Getting the current directory of the reference proteomes.
+
+    Unlike the matrices and phosphoproteome getters, this one returns the value
+    as well as printing nothing: sequence retrieval needs to read it, and so do
+    error messages that tell the user where the file was looked for.
+
+    Parameters
+    ----------
+    None.
+
+    Returns
+    -------
+    str
+        Current reference proteome directory.
+
+    """
+
+    return(_global_vars.proteome_dir)
+
+
+def set_current_proteome_dir(proteome_dir):
+    """
+    Setting the directory of the reference proteomes (UniProt FASTA files).
+
+    These files are not bundled with the package. Set this to wherever they are
+    on this machine, or set the KL_PROTEOME_DIR environment variable, or pass
+    ref_prot_file to retrieve_sequences for a one-off.
+
+    Parameters
+    ----------
+    proteome_dir : str
+        Reference proteome directory.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    _global_vars.proteome_dir = proteome_dir
+    print(f'Reference proteome directory was set to: {_global_vars.proteome_dir}')
+
+
+def reset_current_proteome_dir():
+    """
+    Reset the reference proteome directory to default.
+
+    The default is the KL_PROTEOME_DIR environment variable, read at the time
+    this function is called, falling back to the legacy package's directory.
+
+    Parameters
+    ----------
+    None.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    _global_vars.reset_proteome_dir()
+    print(f'Reference proteome directory was reset to: {_global_vars.proteome_dir}')
+
 #%%
 """
 ######################
