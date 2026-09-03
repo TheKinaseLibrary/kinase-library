@@ -15,6 +15,10 @@ Changed
 
 - Removed the unrelated `Bio` package from the requirements. `biopython` is the real dependency, and it is now actually used
 
+Fixed
+
+- `requires-python` was `>=3.10, <=3.13`, which under PEP 440 excludes Python 3.13.1 and every later 3.13 patch release, so `pip install kinase-library` refused to install on an up-to-date Python 3.13. It is now `>=3.10, <3.14`
+
 ## [1.5.0] - 2025-06-27
 
 Added
