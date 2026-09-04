@@ -299,22 +299,22 @@ def create_kin_sub_sets(data_values, threshold, comp_direction):
 def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object',
                                    lff_col_name='NES', pval_col_name=None, adj_pval=True):
     """
-    Function to combine multiple MEA enrichment results into lff and pval dataframes for plotting bubblemap.
+    Combine multiple MEA enrichment results into statistic and p-value dataframes for plotting a bubblemap.
 
     Parameters
     ----------
-    enrichment_results : dict
-        Dictionary of either kl.EnrichmentResults objects or pd.DataFrame enrichment results tables, and conditions as keys.
-    conds_list : list
-        List of conditions.
+    enrichment_results_dict : dict
+        Dictionary of either kl.MeaEnrichmentResults objects or pd.DataFrame enrichment results tables, with conditions as keys.
     data_type : str, optional
-        Type of enrichment results data: 'kl_object' (kl.EnrichmentResults) or 'data_frame' (pd.DataFrame)
+        Type of enrichment results data: 'kl_object' (kl.MeaEnrichmentResults) or 'data_frame' (pd.DataFrame).
+        The default is 'kl_object'.
     lff_col_name : str, optional
-        Log frequency factor column name. The default is None.
-        If None, will be set to 'log2_freq_factor'.
+        Enrichment statistic column name. The default is 'NES'.
     pval_col_name : str, optional
-        Adjusted p-value column name. The default is None.
-        If None, will be set to 'fisher_adj_pval'.
+        P-value column name. If None, use 'FDR' when adj_pval is True. When adj_pval is False, prefer the native
+        MEA column 'p-value' and fall back to the legacy spelling 'pvalue' when needed. The default is None.
+    adj_pval : bool, optional
+        Controls the default p-value column when pval_col_name is None. The default is True.
 
     Raises
     ------
@@ -324,9 +324,9 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
     Returns
     -------
     lff_data : pd.DataFrame
-        Dataframe with log frequency factor enrichment data of all conditions.
+        Dataframe with the selected MEA enrichment statistic for all conditions (NES by default).
     pval_data : pd.DataFrame
-        Dataframe with adjusted p-value enrichment data of all conditions.
+        Dataframe with the selected p-value data for all conditions.
     """
 
     if data_type not in ['kl_object','data_frame']:
@@ -345,18 +345,23 @@ def combine_mea_enrichment_results(enrichment_results_dict, data_type='kl_object
         raise ValueError('All enrichment results must have the same kinases enriched.')
     kinases = enrichment_results_tables[0].index.to_list()
 
-    if pval_col_name is None:
-        if adj_pval:
-            pval_col_name = 'FDR'
-        else:
-            pval_col_name = 'pvalue'
-
     lff_data = pd.DataFrame(index=kinases, columns=conds_list)
     pval_data = pd.DataFrame(index=kinases, columns=conds_list)
 
     for res,cond in zip(enrichment_results_tables,conds_list):
+        if pval_col_name is not None:
+            res_pval_col_name = pval_col_name
+        elif adj_pval:
+            res_pval_col_name = 'FDR'
+        elif 'p-value' in res.columns:
+            res_pval_col_name = 'p-value'
+        elif 'pvalue' in res.columns:
+            res_pval_col_name = 'pvalue'
+        else:
+            res_pval_col_name = 'p-value'
+
         lff_data[cond] = res[lff_col_name]
-        pval_data[cond] = res[pval_col_name]
+        pval_data[cond] = res[res_pval_col_name]
 
     return(lff_data,pval_data)
 
@@ -693,20 +698,22 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
                    num_panels=6, vertical=True, constrained_layout=True,
                    xaxis_label='Condition', yaxis_label='Kinase',
                    xlabel=True, xlabels_size=8, ylabel=True, ylabels_size=10,
-                   font_family=None):
+                   font_family=None, lff_cbar_title='log2(FF)',
+                   pval_legend_title='Adj. p-value'):
     """
-    Function to display a bubblemap with Kinase Library enrichment results inputted as log frequency factor and p-value matrices.
+    Display a bubblemap with enrichment statistics encoded by color and p-values encoded by bubble size.
 
     Parameters
     ----------
     lff_data : pd.DataFrame
-        Matrix containing Kinase Library enrichment log frequency factor data with kinases as index and conditions as columns.
+        Matrix containing enrichment statistics with kinases as index and conditions as columns. Values determine bubble colors;
+        Kinase Library binary and differential enrichment workflows use log2 frequency factors by convention.
     pval_data : pd.DataFrame
         Matrix containing Kinase Library enrichment p_value data. Index (kinases) and columns (conditions) must be identical to lff_data.
     cont_kins : pd.DataFrame, optional
         Matrix containing boolean values specifying contradicting kinases in each condition. Index (kinases) and columns (conditions) must be identical to lff_data and pval_data. The default is None.
     sig_lff : float, optional
-        The minimum log frequency factor value to be displayed on the bubblemap. The default is 0.
+        The minimum absolute magnitude of the enrichment statistic to be displayed on the bubblemap. The default is 0.
     sig_pval : float, optional
         The maximum p_value that will be displayed on the bubblemap. The default is 0.1.
     kinases : list, optional
@@ -728,7 +735,8 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     condition_clust : bool, optional
         If True, conditions will be clustered based on the cluster_by metric. The default is False.
     cluster_by : str, optional
-        Metric specifying which matrix to cluster kinases or conditions by. Options are 'lff', 'pval', 'both', or 'custom'. The default is None.
+        Metric specifying which matrix to cluster kinases or conditions by. Options are 'lff' (the color-statistic matrix),
+        'pval', 'both', or 'custom'. The default is None.
     cluster_by_matrix : pd.DataFrame, optional
         If cluster_by is set to 'custom', a cluster_by_matrix with the same dimensions of the original data must be provided. The default is None.
     cluster_method : str, optional
@@ -744,7 +752,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
     family_legned : bool, optional
         If True, legend showing either kinase family or kinase type colors, depending on color_kins_by. The default is True.
     lff_cbar : bool, optional
-        If True, legend displaying reflecting the log frequency factor colors from the bubblemap. The default is True.
+        If True, display a colorbar for the enrichment statistic encoded by the bubble colors. The default is True.
     pval_legend : bool, optional
         If True, legend displaying four equivalently spaced p-values from the dataset (including min and max) is included. The default is True.
     pval_legend_spacing : float, optional
@@ -756,7 +764,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         Maximize the plotting window. The default is True.
         Must be False if an axis is provided to the function.
     lff_clim : tuple of float, optional
-        Color limit for the log frequency factors on the bubblemap. If not specified, the default is (-2,2).
+        Color limits for the enrichment statistic on the bubblemap. If not specified, the default is (-2,2).
     max_pval_size : float, optional
         Maximum p-value the data can be scaled to, prevents extremely high p-values from dwarfing smaller, still significant bubbles. The default is 4, meaning all bubbles of equal or greater significant than 1x10^-4 will appear as the same size.
     bubblesize_range : tuple of float,, optional
@@ -781,6 +789,10 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         If provided, float will be used to determine condition label sizes. The default is 10.
     font_family : string, optional
         Customized font family for the figures. The default is None.
+    lff_cbar_title : str, optional
+        Title for the enrichment-statistic colorbar. The default is 'log2(FF)'.
+    pval_legend_title : str, optional
+        Title for the bubble-size p-value legend. The default is 'Adj. p-value'.
 
     Raises
     ------
@@ -1033,7 +1045,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
             handles[i].set_markerfacecolor('white')
             handles[i].set_alpha(1)
         axes[1].legend(handles=handles, labels=[str(10**-x) for x in size_legend_data['sizes'][:3]] + ['<'+str(10**int(-(size_legend_data['sizes'][3])))],
-                       title='Adj. p-value', loc='center', labelspacing=pval_legend_spacing, facecolor='white')
+                       title=pval_legend_title, loc='center', labelspacing=pval_legend_spacing, facecolor='white')
     axes[1].axis('off')
 
     if lff_cbar:
@@ -1041,7 +1053,7 @@ def plot_bubblemap(lff_data, pval_data, cont_kins=None, sig_lff=0, sig_pval=0.1,
         sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=cnorm)
         sm.set_array([])
         cbar = fig.colorbar(sm, cax=axes[2])
-        cbar.ax.set_title('log2(FF)')
+        cbar.ax.set_title(lff_cbar_title)
     else:
         axes[2].axis('off')
 
